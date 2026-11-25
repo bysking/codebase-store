@@ -1,0 +1,76 @@
+{
+  "name": "@bysking/codebase-store",
+  "version": "0.1.0",
+  "description": "仓库认知索引 MCP — AOCI-CODE 的精简复刻：让 Agent 开工前读一次索引就认识整个系统",
+  "type": "module",
+  "bin": {
+    "cos": "./bin/cos.mjs"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18",
+    "bun": ">=1.1"
+  },
+  "keywords": [
+    "agent",
+    "ai",
+    "aoci",
+    "bun",
+    "claude",
+    "claude-code",
+    "codebase",
+    "codebase-index",
+    "codex",
+    "cognition",
+    "context",
+    "cursor",
+    "index",
+    "knowledge-base",
+    "llm",
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "repo-map"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bysking/codebase-store.git"
+  },
+  "scripts": {
+    "start": "bun run src/cli.ts",
+    "mcp": "bun run src/cli.ts mcp",
+    "build:npm": "bun run scripts/build-npm.ts",
+    "build:bin": "bun build --compile --minify src/cli.ts --outfile cos",
+    "test": "bun test",
+    "prepack": "bun run build:npm"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5"
+  },
+  "author": "bysking",
+  "homepage": "https://github.com/bysking/codebase-store#readme",
+  "bugs": {
+    "url": "https://github.com/bysking/codebase-store/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ]
+}
