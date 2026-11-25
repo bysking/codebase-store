@@ -75,12 +75,13 @@ cos 就管哪个项目。
 
 这份配置可以放在**用户级**配置文件里，所有项目共用：
 
-| 宿主 | 用户级配置文件 |
-|---|---|
-| Claude Code | `~/.claude/settings.json`（或项目级 `.mcp.json`） |
+
+| 宿主           | 用户级配置文件                                                    |
+| ---------------- | ------------------------------------------------------------------- |
+| Claude Code    | `~/.claude/settings.json`（或项目级 `.mcp.json`）                 |
 | Claude Desktop | `~/Library/Application Support/Claude/claude_desktop_config.json` |
-| Codex | `~/.codex/config.toml`（`[mcp_servers.cos]`） |
-| Cursor | `~/.cursor/mcp.json` |
+| Codex          | `~/.codex/config.toml`（`[mcp_servers.cos]`）                     |
+| Cursor         | `~/.cursor/mcp.json`                                              |
 
 ### 方式 B：全局安装（启动最快）
 
@@ -404,11 +405,12 @@ bun run build:npm           # npx 入口 → bin/cos.mjs（约 59KB）
 
 ### 双入口是怎么工作的
 
-| 入口 | 执行的文件 | 运行时要求 |
-|---|---|---|
-| `npx @bysking/codebase-store` | `bin/cos.mjs`（预编译 JS） | Node ≥ 18 |
-| `bunx @bysking/codebase-store` | `src/cli.ts`（TS 源码） | Bun ≥ 1.1 |
-| 全局安装 `cos` | `bin/cos.mjs` | Node ≥ 18 |
+
+| 入口                           | 执行的文件                 | 运行时要求 |
+| -------------------------------- | ---------------------------- | ------------ |
+| `npx @bysking/codebase-store`  | `bin/cos.mjs`（预编译 JS） | Node ≥ 18 |
+| `bunx @bysking/codebase-store` | `src/cli.ts`（TS 源码）    | Bun ≥ 1.1 |
+| 全局安装 `cos`                 | `bin/cos.mjs`              | Node ≥ 18 |
 
 源码只用 `node:*` 标准 API（`node:crypto` / `node:child_process` / `node:fs`），
 **不依赖任何 Bun 专有能力**——这是两条路径能共存的前提。

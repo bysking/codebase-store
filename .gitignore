@@ -4,7 +4,6 @@ bun.lockb
 
 # 编译产物
 /cos
-/cog
 # npx 入口由 prepublishOnly 生成，但为让 npm 打包时能带上，构建后需提交
 # 如果你不想提交产物，删掉下面这行（发布前 prepublishOnly 会重新生成）
 # /bin/
