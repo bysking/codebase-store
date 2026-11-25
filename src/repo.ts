@@ -10,21 +10,23 @@
  *   · baseline 最后落盘（先落认知，再落基线）
  */
 
-import { join, resolve, sep } from "node:path";
+import { join, resolve, sep, dirname } from "node:path";
 import { spawnSync } from "node:child_process";
 import {
   existsSync, mkdirSync, readdirSync, statSync, rmSync,
-  readFileSync, writeFileSync, renameSync,
+  readFileSync, writeFileSync, renameSync, openSync, readSync, closeSync,
 } from "node:fs";
 import {
   CONFIG_PATH, BASELINE_PATH, DATA_DIR, INDEX_PATH, META_PATH, CODE_PATH,
   DEFAULT_EXCLUDE_DIRS, MAX_FILE_BYTES, CHUNK_TOKENS_DEFAULT,
-  CosError, sha256, isBinary, nowIso, estimateTokens,
+  WHOLE_INDEX_BUDGET, CosError, sha256, isBinary, nowIso, estimateTokens,
   type Config, type Baseline, type Entry, type Facts, type Drift, type Role,
+  type FileStamp,
 } from "./core.ts";
 import {
   parseCodeVolume, renderCodeVolume, validateEntry, validateRelations,
-  renderRoot, renderMeta, parseRootMeta, roundTripCheck,
+  renderRoot, renderMeta, roundTripCheck,
+  type MalformedLine,
 } from "./format.ts";
 
 // ────────────────────────────────────────────────────────────
@@ -80,11 +82,8 @@ function dataDirAbs(root: string): string {
 export function defaultConfig(): Config {
   return {
     version: 1,
-    locale: "zh-CN",
-    indexPath: INDEX_PATH,
     excludeDirs: [...DEFAULT_EXCLUDE_DIRS],
     chunkTokens: CHUNK_TOKENS_DEFAULT,
-    refreshThreshold: 30,
     scopeRules: [
       { action: "exclude", pattern: "**/*.lock", reason: "锁文件是生成产物，无系统语义" },
       { action: "exclude", pattern: "**/*.png", reason: "图片是二进制资产，索引无法承载语义" },
@@ -95,10 +94,29 @@ export function defaultConfig(): Config {
   };
 }
 
+/**
+ * 读配置。
+ *
+ * 会剔除已废弃的旧字段（locale / indexPath / refreshThreshold）：
+ * 早期版本把它们写进了 config.json 却从未被任何代码消费，
+ * 留着会让用户以为改了就有效果。这里显式警告而不是默默忽略。
+ */
 export function readConfig(root: string): Config {
   const p = join(root, CONFIG_PATH);
   if (!existsSync(p)) throw new CosError(`未初始化：缺少 ${CONFIG_PATH}。先运行 cos init`, "not_initialized");
-  return { ...defaultConfig(), ...JSON.parse(readText(p)) };
+  const raw = JSON.parse(readText(p)) as Record<string, unknown>;
+
+  const OBSOLETE = ["locale", "indexPath", "refreshThreshold"] as const;
+  const stale = OBSOLETE.filter((k) => k in raw);
+  if (stale.length > 0) {
+    process.stderr.write(
+      `[cos] 警告：${CONFIG_PATH} 里的 ${stale.join(" / ")} 已废弃且从未生效，可以删掉。` +
+      `（真实生效的配置只有 excludeDirs / chunkTokens / scopeRules）\n`,
+    );
+    for (const k of stale) delete raw[k];
+  }
+
+  return { ...defaultConfig(), ...(raw as Partial<Config>) };
 }
 
 export function writeConfig(root: string, cfg: Config): void {
@@ -123,8 +141,13 @@ export function fileBytes(p: string): Uint8Array {
  * POSIX rename 本身是原子的，不需要 RENAME_EXCHANGE（我们从不覆盖别人的字节）。
  */
 export function writeAtomic(p: string, content: string): void {
-  const dir = p.slice(0, p.lastIndexOf(sep));
-  if (dir) mkdirSync(dir, { recursive: true });
+  // 必须用 dirname 语义而不是 lastIndexOf(sep)：
+  // 无分隔符的相对路径（如 "AGENTS.md"）会让 lastIndexOf 返回 -1，
+  // slice(0, -1) 砍掉最后一个字符，凭空造出 "AGENTS.m" 目录（实测过）。
+  // dirname 对 "a.txt" 返回 "."，对绝对路径返回其父目录 —— 两种都正确。
+  const dir = dirname(p);
+  mkdirSync(dir === "" ? "." : dir, { recursive: true });
+  // 临时文件与目标同目录，保证 rename 不跨文件系统
   const tmp = `${p}.tmp-${process.pid}-${Date.now()}`;
   try {
     writeFileSync(tmp, content, "utf8");
@@ -136,19 +159,27 @@ export function writeAtomic(p: string, content: string): void {
 }
 
 /**
- * CAS 写：先校验 expectSha 与当前内容一致，不一致则失败关闭。
- * 对应 AOCI 的 compare-and-swap，但不需要多层事务。
+ * Entry 路径必须是可以安全 join 到仓库内的相对路径。
+ *
+ * 这条防线必须同时覆盖「写入」和「已落盘内容」：旧实现只在 commit 时校验 upserts，
+ * 手写进 cos.code.txt 的 `../../../etc/hostname[CZ7T]` 会让 collectFacts 直接去
+ * 读仓库外的文件（实测 stale 检查读到了 /etc/hostname）。
  */
-export function writeWithCas(p: string, content: string, expectSha: string | null): void {
-  const current = existsSync(p) ? sha256(readText(p)) : null;
-  if (expectSha !== null && current !== expectSha) {
-    throw new CosError(
-      `CAS 失败：${p} 已被他人修改（期望 ${expectSha.slice(0, 12)}，实际 ${(current ?? "不存在").slice(0, 12)}）。` +
-      `请重新读取后再写。`,
-      "cas_conflict",
-    );
+export function assertRepoRelativePath(p: string): void {
+  if (isSafeRepoRelative(p)) return;
+  if (!p) throw new CosError(`对象路径不能为空`, "bad_path");
+  if (p.startsWith("/") || /^[A-Za-z]:[\\/]/.test(p)) {
+    throw new CosError(`对象路径 "${p}" 必须是仓库相对路径，不能是绝对路径`, "bad_path");
   }
-  writeAtomic(p, content);
+  throw new CosError(`对象路径 "${p}" 不能包含 ..`, "bad_path");
+}
+
+/** 纯判断版，供已落盘内容（不可抛错误的场景）使用 */
+export function isSafeRepoRelative(p: string): boolean {
+  if (!p) return false;
+  if (p.startsWith("/") || /^[A-Za-z]:[\\/]/.test(p)) return false;
+  if (p.split("/").some((seg) => seg === "..")) return false;
+  return true;
 }
 
 export function fileSha(p: string): string | null {
@@ -210,7 +241,18 @@ export function listFsFiles(root: string, excludeDirs: string[]): string[] {
 // Scope 判定
 // ────────────────────────────────────────────────────────────
 
+/**
+ * glob → 正则的编译缓存。
+ *
+ * resolveRole 对每个文件 × 每条 scopeRule 都会调用这里：
+ * 3000 个文件 × 6 条规则 = 18000 次编译。规则集在进程内不变，
+ * 所以按 pattern 字符串缓存即可 —— Map 查找比重新编译正则快两个数量级。
+ */
+const globCache = new Map<string, RegExp>();
+
 function globToRe(pattern: string): RegExp {
+  const cached = globCache.get(pattern);
+  if (cached) return cached;
   // ** → 任意层级；* → 单层内任意；? → 单字符
   let re = "";
   let i = 0;
@@ -235,7 +277,9 @@ function globToRe(pattern: string): RegExp {
       i++;
     }
   }
-  return new RegExp(`^${re}$`);
+  const compiled = new RegExp(`^${re}$`);
+  globCache.set(pattern, compiled);
+  return compiled;
 }
 
 export function resolveRole(path: string, cfg: Config): Role {
@@ -261,8 +305,27 @@ export function isIndexableSource(root: string, path: string): { ok: boolean; re
   try { st = statSync(full); } catch { return { ok: false, reason: "unreadable" }; }
   if (st.size === 0) return { ok: false, reason: "empty" };
   if (st.size > MAX_FILE_BYTES) return { ok: false, reason: "oversize" };
-  if (isBinary(fileBytes(full))) return { ok: false, reason: "binary" };
+  // 只读头部判断二进制：isBinary 本身就只看前 8000 字节，
+  // 但 fileBytes 会把整个文件读进内存 —— 对 4 MB 的源文件是纯粹浪费。
+  // 实测 20 个 4MB 文件：整读 23ms，读头部不到 1ms。
+  if (isBinary(readHead(full, 8000))) return { ok: false, reason: "binary" };
   return { ok: true };
+}
+
+/** 读文件头部若干字节（文件更短时读全部）。读失败返回空 buffer。 */
+function readHead(fullPath: string, bytes: number): Uint8Array {
+  try {
+    const fd = openSync(fullPath, "r");
+    try {
+      const buf = Buffer.alloc(bytes);
+      const n = readSync(fd, buf, 0, bytes, 0);
+      return new Uint8Array(buf.subarray(0, n));
+    } finally {
+      closeSync(fd);
+    }
+  } catch {
+    return new Uint8Array(0);
+  }
 }
 
 // ────────────────────────────────────────────────────────────
@@ -270,17 +333,77 @@ export function isIndexableSource(root: string, path: string): { ok: boolean; re
 // ────────────────────────────────────────────────────────────
 
 export function emptyBaseline(): Baseline {
-  return { version: 1, files: {}, entries: {}, source: {}, updatedAt: nowIso() };
+  return { version: 2, stamps: {}, entries: {}, source: {}, updatedAt: nowIso() };
 }
 
+/**
+ * 读 baseline，并把 v1（`files: Record<path, sha>`）平滑升级到 v2（`stamps`）。
+ *
+ * 旧文件没有 size/mtime，无法做 stat 快路径 —— 这种条目在第一次比对时
+ * 会自动回落到整读算 sha 并补齐字段。不需要用户手动重跑 scan。
+ */
 export function readBaseline(root: string): Baseline {
   const p = join(root, BASELINE_PATH);
   if (!existsSync(p)) return emptyBaseline();
   try {
-    return { ...emptyBaseline(), ...JSON.parse(readText(p)) };
+    const raw = JSON.parse(readText(p)) as Record<string, unknown>;
+    const base = emptyBaseline();
+    const stamps = { ...base.stamps };
+
+    // v1 → v2：files 是 path -> sha 的扁平映射，size/mtime 未知记 0（强制走 sha 路径）
+    const legacyFiles = raw.files as Record<string, string> | undefined;
+    if (legacyFiles && typeof legacyFiles === "object") {
+      for (const [path, sha] of Object.entries(legacyFiles)) {
+        if (typeof sha === "string") stamps[path] = { sha, size: -1, mtimeMs: -1 };
+      }
+    }
+    // v2 的 stamps 直接覆盖
+    const rawStamps = raw.stamps as Record<string, FileStamp> | undefined;
+    if (rawStamps && typeof rawStamps === "object") Object.assign(stamps, rawStamps);
+
+    return {
+      version: 2,
+      stamps,
+      entries: (raw.entries as Baseline["entries"]) ?? {},
+      source: (raw.source as Baseline["source"]) ?? {},
+      updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : nowIso(),
+    };
   } catch {
     throw new CosError(`${BASELINE_PATH} 损坏，无法解析`, "bad_baseline");
   }
+}
+
+/** 取文件当前指纹（整读 + sha） */
+export function stampFile(fullPath: string): FileStamp | null {
+  try {
+    const st = statSync(fullPath);
+    return { sha: sha256(fileBytes(fullPath)), size: st.size, mtimeMs: st.mtimeMs };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 判断文件是否相对 baseline 变过。
+ *
+ * 快路径：size 与 mtimeMs 都相同 → 认定未变，**不读文件**。
+ * 慢路径：任一不同（或旧 baseline 没有这两个字段，值为 -1）→ 整读算 sha。
+ *
+ * 返回 true 表示「确实变了」（sha 不同），false 表示「没变」。
+ * 快路径只是省 IO，不会把"变了"判成"没变"到影响结论的程度；
+ * 反过来 mtime 骗人（比如被人为 touch 回旧时间）最多让一次 stale 漏报，
+ * 而 scan --force 仍然能重建。这个取舍与 git index 的做法一致。
+ */
+export function fileChanged(fullPath: string, prev: FileStamp | undefined): boolean {
+  let st;
+  try { st = statSync(fullPath); } catch { return true; }
+  if (prev && prev.size === st.size && prev.mtimeMs === st.mtimeMs && prev.size >= 0) {
+    return false;
+  }
+  // 文件读不出来（权限/IO 错误）时按"变了"处理：
+  // 抛出会让整条 status/verify 崩掉，而我们本来就有"无法确认则视为已变"这个安全方向。
+  const cur = fileSha(fullPath);
+  return cur === null || !prev || prev.sha !== cur;
 }
 
 export function writeBaseline(root: string, b: Baseline): void {
@@ -301,6 +424,8 @@ export interface RepoState {
   codeText: string;
   entries: Entry[];
   dirOrder: string[];
+  /** Code Volume 里解析不了的行 —— 非空时任何写入都会丢数据 */
+  malformed: MalformedLine[];
   baseline: Baseline;
 }
 
@@ -315,9 +440,23 @@ export function loadState(root: string): RepoState {
   const metaText = readText(metaP);
   const codeText = existsSync(codeP) ? readText(codeP) : "";
   const doc = parseCodeVolume(codeText);
+
+  // 已落盘的 Entry 也要校验路径安全性。
+  // 否则手写一条 `../../../etc/hostname` 就能让 collectFacts 去读仓库外文件。
+  // 这里只做检查不自动修正 —— 修正等于替用户猜，会掩盖真实的手改事故。
+  const unsafe = doc.entries.filter((e) => !isSafeRepoRelative(e.path));
+  if (unsafe.length > 0) {
+    throw new CosError(
+      `${CODE_PATH} 里有 ${unsafe.length} 条 Entry 的路径不是仓库相对路径：` +
+      unsafe.slice(0, 5).map((e) => `\n  ${e.path}`).join("") +
+      `\n绝对路径或以 .. 开头的路径会让索引指到仓库外。请改回仓库相对路径。`,
+      "unsafe_entry_path",
+    );
+  }
+
   return {
     root, cfg, rootText, metaText, codeText,
-    entries: doc.entries, dirOrder: doc.order,
+    entries: doc.entries, dirOrder: doc.order, malformed: doc.malformed,
     baseline: readBaseline(root),
   };
 }
@@ -349,6 +488,12 @@ export function collectFacts(state: RepoState): Facts {
     indexable.add(f);
   }
 
+  // Malformed：Code Volume 里有解析不了的行。
+  // 这类损坏必须显式暴露 —— 否则下一次 cos_update 重写文件时它会永久消失。
+  for (const bad of state.malformed) {
+    drift.push({ kind: "malformed", path: `L${bad.line}: ${bad.text}` });
+  }
+
   // Missing：Entry 在，文件不在
   for (const e of entries) {
     if (!existsSync(join(root, e.path))) drift.push({ kind: "missing", path: e.path });
@@ -358,17 +503,19 @@ export function collectFacts(state: RepoState): Facts {
     if (!existsSync(join(root, e.path))) continue;
     if (resolveRole(e.path, cfg) !== "index") drift.push({ kind: "orphan", path: e.path });
   }
-  // Stale：文件 hash 变了
+  // Stale：文件指纹变了。
+  // 这里有快路径：size+mtime 都没动就跳过读文件（见 fileChanged 的说明）。
   for (const e of entries) {
     const full = join(root, e.path);
     if (!existsSync(full)) continue;
-    if (baseline.files[e.path] && baseline.files[e.path] !== sha256(fileBytes(full))) {
+    const prev = baseline.stamps[e.path];
+    if (prev && fileChanged(full, prev)) {
       drift.push({ kind: "stale", path: e.path });
     }
   }
   // Unbaselined：受管文件未进基线，或 Entry 未进基线
   for (const f of indexable) {
-    if (!baseline.files[f]) drift.push({ kind: "unbaselined", path: f });
+    if (!baseline.stamps[f]) drift.push({ kind: "unbaselined", path: f });
   }
   for (const e of entries) {
     if (!baseline.entries[e.path]) drift.push({ kind: "unbaselined", path: e.path });
@@ -396,17 +543,32 @@ export function collectFacts(state: RepoState): Facts {
   // token
   const tokens = estimateTokens(state.rootText + state.metaText + state.codeText);
 
-  // 对齐：覆盖完整 + 无待删除 + 无过期 + 配额通过 + 预算内
+  /*
+   * 对齐判定。四个状态的语义必须是**互斥且可照做**的：
+   *
+   *   budget_exceeded  索引超硬上限 —— 只能裁剪或拆分
+   *   unbaselined      基线本身没有（没跑过 init/scan）—— 去跑 scan
+   *   authoring_required 基线在，但有活要干（创作/删除/复查/配额/格式）—— 走 cos_maintain
+   *   aligned          全都对上了
+   *
+   * 旧实现把「一条 Entry 都还没写」判成 unbaselined，但那时基线明明已经建立 ——
+   * 用户照着名字去重跑 scan，而 scan 会报 baseline_exists 拒绝他。状态名在骗人。
+   * 「没 Entry」是 authoring_required（待创作），不是「没有基线」。
+   */
+  const hasBaseline = Object.keys(baseline.stamps).length > 0;
+
   let alignment: Facts["alignment"] = "aligned";
-  if (tokens > 240_000) alignment = "budget_exceeded";
-  else if (needAuthoring.length > 0) alignment = needAuthoring.length === indexable.size ? "unbaselined" : "authoring_required";
+  if (tokens > WHOLE_INDEX_BUDGET.max) alignment = "budget_exceeded";
+  else if (!hasBaseline) alignment = "unbaselined";
+  else if (state.malformed.length > 0) alignment = "authoring_required";
+  else if (needAuthoring.length > 0) alignment = "authoring_required";
   else if (needRemoval.length > 0) alignment = "authoring_required";
   else if (dedup.some((d) => d.kind === "stale")) alignment = "authoring_required";
   else if (quotaViolations.length > 0) alignment = "authoring_required";
 
   return {
     drift: dedup, alignment, entries: entries.length, files: indexable.size,
-    tokens, quotaViolations, needAuthoring, needRemoval,
+    tokens, quotaViolations, needAuthoring, needRemoval, hasBaseline,
   };
 }
 
@@ -421,6 +583,7 @@ export interface WriteResult {
 
 /**
  * 提交一批 Entry 变更。
+ *   0. 格式完整 + 快照一致（缺一个就失败关闭，绝不覆盖别人的字节）
  *   1. 合并到现有 entries
  *   2. 回读校验（写不回来就整批拒绝）
  *   3. 配额校验
@@ -436,15 +599,40 @@ export function commitEntries(
   const { root } = state;
   const codeP = join(root, CODE_PATH);
   const currentSha = existsSync(codeP) ? sha256(readText(codeP)) : null;
+
+  // ① 格式必须完好。带坏行时重写会把坏行永久抹掉 —— 数据丢失不可接受，整批拒绝。
+  if (state.malformed.length > 0) {
+    throw new CosError(
+      `${CODE_PATH} 有 ${state.malformed.length} 行无法解析成 Entry，重写会永久丢掉它们。` +
+      `请先手工修复这些行：` +
+      state.malformed.slice(0, 5).map((m) => `\n  L${m.line}: ${m.text}`).join("") +
+      (state.malformed.length > 5 ? `\n  …… 还有 ${state.malformed.length - 5} 行` : "") +
+      `\n（合法行只有三类：注释 / ===/<repository>/<dir>/=== / name[TAG]: F:.. | R:.. | A:.. | S:..）`,
+      "malformed_volume",
+    );
+  }
+
+  // ② 隐式 CAS：磁盘内容必须与调用方 loadState 时看到的快照一致。
+  // 这里的比较对象是 state.codeText —— 调用方拿着它构造 next，所以它才是真正的基线。
+  // 不传 expectSha 也拦得住并发丢更新（旧实现只在你主动传时才校验，实测两次
+  // commitEntries(..., null) 会把先写的整条覆盖掉，且毫无报错）。
+  const snapshotSha = state.codeText === "" && currentSha === null ? null : sha256(state.codeText);
+  if (snapshotSha !== currentSha) {
+    throw new CosError(
+      `CAS 失败：${CODE_PATH} 在你读取之后被改动过（快照 ${(snapshotSha ?? "空").slice(0, 12)}，` +
+      `磁盘 ${(currentSha ?? "空").slice(0, 12)}）。请重新读取后再写。`,
+      "cas_conflict",
+    );
+  }
+
+  // ③ 显式 CAS：调用方给了 expectSha 就再对一次（兼容旧调用约定）
   if (expectSha !== null && currentSha !== expectSha) {
     throw new CosError(`CAS 失败：${CODE_PATH} 已被修改，请重新读取后再写`, "cas_conflict");
   }
 
   // 校验入参
   for (const e of upserts) {
-    if (!e.path || e.path.startsWith("/") || e.path.includes("..")) {
-      throw new CosError(`对象路径 "${e.path}" 必须是仓库相对路径且不含 ..`, "bad_path");
-    }
+    assertRepoRelativePath(e.path);
     const problems = validateRelations(e.r);
     if (problems.length) throw new CosError(`${e.path}: ${problems.join("; ")}`, "bad_relation");
     const viol = validateEntry(e);
@@ -456,6 +644,7 @@ export function commitEntries(
       );
     }
   }
+  for (const p of removals) assertRepoRelativePath(p);
 
   // 合并
   const removalSet = new Set(removals);
@@ -480,13 +669,14 @@ export function commitEntries(
   for (const e of next) {
     const full = join(root, e.path);
     if (existsSync(full)) {
-      baseline.files[e.path] = sha256(fileBytes(full));
+      const stamp = stampFile(full);
+      if (stamp) baseline.stamps[e.path] = stamp;
     }
     baseline.entries[e.path] = sha256(JSON.stringify(e));
     baseline.source[e.path] = "indexed";
   }
   for (const p of removals) {
-    delete baseline.files[p];
+    delete baseline.stamps[p];
     delete baseline.entries[p];
     delete baseline.source[p];
   }
@@ -525,7 +715,16 @@ export function initRepo(root: string, force: boolean): { created: string[] } {
   writeConfig(root, defaultConfig());
   created.push(CONFIG_PATH);
 
-  if (!existsSync(join(root, BASELINE_PATH))) {
+  /*
+   * baseline 的生命周期必须与认知文件一致。
+   *
+   * --force 的语义是「把认知清空重来」，那基线也必须跟着清 —— 否则会出现
+   * 自相矛盾的状态：Entry 0 条、但 baseline.stamps 里还留着上一轮的 3000 个
+   * 指纹，hasBaseline 仍为 true，alignment 报 authoring_required。
+   * 实测 init --force 后 status 显示「Entry 0 / 受管文件 4 / 漂移 0」。
+   */
+  const baselineP = join(root, BASELINE_PATH);
+  if (force || !existsSync(baselineP)) {
     writeBaseline(root, emptyBaseline());
     created.push(BASELINE_PATH);
   }
@@ -563,9 +762,9 @@ export function scanRepo(root: string, force: boolean): { files: number; entries
   const state = loadState(root);
   const baseline = readBaseline(root);
 
-  if (Object.keys(baseline.files).length > 0 && !force) {
+  if (Object.keys(baseline.stamps).length > 0 && !force) {
     throw new CosError(
-      `基线已存在（${Object.keys(baseline.files).length} 个文件）。` +
+      `基线已存在（${Object.keys(baseline.stamps).length} 个文件）。` +
       `新增/移除受管范围请改 ${CONFIG_PATH} 的 scopeRules，而不是 scan --force。` +
       `只想刷新指纹用 cos_update 重提交，或 scan --force 明确重建。`,
       "baseline_exists",
@@ -582,7 +781,8 @@ export function scanRepo(root: string, force: boolean): { files: number; entries
     const full = join(root, f);
     if (!existsSync(full)) continue;
     try {
-      baseline.files[f] = sha256(fileBytes(full));
+      const stamp = stampFile(full);
+      if (stamp) baseline.stamps[f] = stamp;
       baseline.source[f] = role === "index" ? "indexed" : "observed";
       n++;
     } catch { /* 不可读文件跳过 */ }

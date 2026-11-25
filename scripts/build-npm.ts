@@ -10,6 +10,9 @@
  * 全量内联会让产物从 60KB 涨到 1.2MB，没必要。
  */
 
+// 本文件用顶层 await，必须是 ESM 模块 —— 加一个导出声明才不会被当成脚本
+export {};
+
 const result = await Bun.build({
   entrypoints: ["./src/cli.ts"],
   outdir: "./bin",

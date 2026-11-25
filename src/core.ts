@@ -47,8 +47,6 @@ export const BASELINE_PATH = `${DATA_DIR}/baseline.json`;
 export const META_BASENAME = "cos.meta.txt";
 export const CODE_BASENAME = "cos.code.txt";
 
-export const RULES_BLOCK_ID = "cos-rules";
-
 /** 单条 Entry 字段长度上限（字符）。按 C 重要度分档：c9-8 / c7-4 / c3-1 */
 export const FIELD_QUOTA: Record<"high" | "mid" | "low", { f: number; r: number; a: number; s: number }> = {
   high: { f: 300, r: 240, a: 200, s: 600 },
@@ -63,9 +61,6 @@ export const WHOLE_INDEX_BUDGET = { target: 120_000, warning: 180_000, max: 240_
 export const CHUNK_TOKENS_DEFAULT = 7_000;
 export const CHUNK_TOKENS_MIN = 4_000;
 export const CHUNK_TOKENS_MAX = 24_000;
-
-/** 单帧 JSON-RPC 上限 16 MiB */
-export const MAX_FRAME_BYTES = 16 * 1024 * 1024;
 
 /** 默认排除目录 */
 export const DEFAULT_EXCLUDE_DIRS = [
@@ -92,11 +87,8 @@ export interface ScopeRule {
 
 export interface Config {
   version: number;
-  locale: string;
-  indexPath: string;
   excludeDirs: string[];
   chunkTokens: number;
-  refreshThreshold: number;
   scopeRules: ScopeRule[];
 }
 
@@ -120,10 +112,28 @@ export interface Tag {
   raw: string;
 }
 
+/**
+ * 单个文件的指纹。
+ *
+ * 为什么除了 sha 还要记 size+mtime：collectFacts 每次都要判断所有受管文件是否
+ * 变过。只存 sha 的话，唯一办法是把每个文件整读一遍再算哈希 —— 实测 1500 文件
+ * / 117 MB 的仓库，一次 status 要 372ms，而 cos_overview 读多个 chunk 时
+ * 每块都重算一遍。
+ *
+ * 加上 size+mtime 后可以先 stat 比对：绝大多数文件没变，一条 stat 就够了。
+ * 这不是为了"绝对正确"（mtime 精度可能骗人），而是为了把开销压在常态路径上 ——
+ * 一旦 size/mtime 有差异，仍然回落到 sha 比对，结论不会变错。
+ */
+export interface FileStamp {
+  sha: string;
+  size: number;
+  mtimeMs: number;
+}
+
 export interface Baseline {
   version: number;
-  /** path -> sha256 */
-  files: Record<string, string>;
+  /** path -> 指纹（sha + size + mtime） */
+  stamps: Record<string, FileStamp>;
   /** path -> sha256 of the Entry line (决定 Entry 是否被改过) */
   entries: Record<string, string>;
   /** path -> 对象来源标记 */
@@ -135,7 +145,9 @@ export type Drift =
   | { kind: "missing"; path: string }
   | { kind: "orphan"; path: string }
   | { kind: "stale"; path: string }
-  | { kind: "unbaselined"; path: string };
+  | { kind: "unbaselined"; path: string }
+  /** Code Volume 里有解析不了的行（手改坏了格式）。此时任何写入都会丢数据。 */
+  | { kind: "malformed"; path: string };
 
 export type Alignment =
   | "aligned"
@@ -161,6 +173,14 @@ export interface Facts {
   needAuthoring: string[];
   /** 有 Entry 但对象已不该被索引 / 文件已不存在 —— 「待删除」 */
   needRemoval: string[];
+  /**
+   * baseline.files 是否非空。
+   *
+   * 这是「基线存在」与「还没有 Entry」两件事的分界：alignment 的 unbaselined
+   * 只在 hasBaseline=false 时成立。旧实现把它们混成一个状态，导致刚 init+scan
+   * 完的项目被报成 unbaselined（用户去重跑 scan 只会被告知基线已存在）。
+   */
+  hasBaseline: boolean;
 }
 
 export interface OverviewChunk {

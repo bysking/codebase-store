@@ -18,16 +18,14 @@ import {
   type Entry, type OverviewChunk,
 } from "./core.ts";
 import {
-  basename, parseTag, quotaBand, validateEntry, validateRelations,
-  renderSectionHeader, quotaBand as band,
+  parseTag,
 } from "./format.ts";
 import {
-  loadState, collectFacts, commitEntries, readBaseline, writeBaseline,
-  readText, fileSha, resolveRole,
+  loadState, collectFacts, commitEntries, fileSha, resolveRole,
   type RepoState,
 } from "./repo.ts";
 import { z } from "zod";
-import type { ToolDef, ToolContext } from "./mcp.ts";
+import type { ToolDef } from "./mcp.ts";
 
 // ────────────────────────────────────────────────────────────
 // 会话合同（等价于 aoci_rules）
@@ -152,13 +150,55 @@ function buildOverviewText(state: RepoState): string {
   ].join("\n");
 }
 
-function chunkOverview(text: string, chunkTokens: number): { chunks: string[]; tokens: number } {
+/**
+ * 把整份索引切成若干块，**只在行边界上切**。
+ *
+ * 为什么不能按字节切：Entry 是「一行一条」的自包含记录，
+ * 从一个 Entry 中间切开，模型会读到 `":注意254"` 这种半截文本，
+ * 既不知道为什么断，也拼不回原意 —— 而且没有任何提示。
+ * 实测：splitByBytes 的产物里 chunk[1] 首行就是一条被腰斩的 Entry。
+ *
+ * 单行本身超过预算时（极长的 S 字段 / 单条 Meta 说明），退回按字符切：
+ * 这种情况下无论怎么切都会断，但至少不会把一条 Entry 拆到两个 chunk 里
+ * 与其它的 Entry 混在一起。
+ */
+export function chunkOverview(text: string, chunkTokens: number): { chunks: string[]; tokens: number } {
   const tokens = estimateTokens(text);
   if (tokens <= chunkTokens) return { chunks: [text], tokens };
-  // 按估算的字节比例切分，保证每块 token 接近预算
-  const bytesPerToken = Math.max(1, Math.ceil(Buffer.byteLength(text, "utf8") / tokens));
-  const maxBytes = chunkTokens * bytesPerToken;
-  return { chunks: splitByBytes(text, maxBytes), tokens };
+
+  const chunks: string[] = [];
+  let cur: string[] = [];
+  let curTokens = 0;
+
+  for (const line of text.split("\n")) {
+    const lineTokens = estimateTokens(line);
+
+    // 单行就超预算：先落掉手上的，再把这一行自己切成多块
+    if (lineTokens > chunkTokens) {
+      if (cur.length > 0) {
+        chunks.push(cur.join("\n"));
+        cur = [];
+        curTokens = 0;
+      }
+      // 按字符贪心切，保证每块尽量接近预算
+      for (const piece of splitByBytes(line, Math.max(1, Math.ceil(
+        (Buffer.byteLength(line, "utf8") / lineTokens) * chunkTokens,
+      )))) {
+        chunks.push(piece);
+      }
+      continue;
+    }
+
+    if (curTokens + lineTokens > chunkTokens && cur.length > 0) {
+      chunks.push(cur.join("\n"));
+      cur = [];
+      curTokens = 0;
+    }
+    cur.push(line);
+    curTokens += lineTokens;
+  }
+  if (cur.length > 0) chunks.push(cur.join("\n"));
+  return { chunks, tokens };
 }
 
 const overviewTool: ToolDef = {
@@ -175,10 +215,19 @@ const overviewTool: ToolDef = {
   },
   handler: (args, ctx) => {
     const state = loadState(ctx.root);
-    const facts = collectFacts(state);
     const cfg = state.cfg;
 
+    /*
+     * collectFacts 会 stat（必要时整读）全仓受管文件，是有成本的。
+     * overview 常常被连读好几块，如果每块都算一遍就是纯浪费 ——
+     * 而且同一份索引的 facts 在读取过程中也不会变（变了 cursor sha 会拦住）。
+     *
+     * 所以只在真正需要它的两个时机算：
+     *   · checkOnly（整个返回就是 facts）
+     *   · 最后一块（那时才交付 alignment 这种"结论性"字段）
+     */
     if (args.checkOnly === true) {
+      const facts = collectFacts(state);
       return {
         checkOnly: true,
         alignment: facts.alignment,
@@ -210,12 +259,20 @@ const overviewTool: ToolDef = {
       tokens: estimateTokens(chunks[idx]!),
       wholeIndexTokens: tokens,
       budget: WHOLE_INDEX_BUDGET,
-      alignment: facts.alignment,
-      entries: facts.entries,
     };
+
     if (nextCursor) {
+      // 中间块：不算 facts（省掉一次全仓 stat/sha），只给纯计数的进度
+      result.entries = state.entries.length;
       result.hint = `还有 ${chunks.length - idx - 1} 块。用 cursor="${nextCursor}" 继续读，读到最后一块才算读完。`;
     } else {
+      // 最后一块：此时交付结论性字段（alignment 需要全仓漂移判定）
+      const facts = collectFacts(state);
+      result.entries = facts.entries;
+      result.alignment = facts.alignment;
+      result.files = facts.files;
+      result.needAuthoring = facts.needAuthoring.length;
+      result.needRemoval = facts.needRemoval.length;
       result.complete = true;
       result.hint = "这是最后一块。你现在持有完整索引。";
     }
@@ -333,6 +390,28 @@ const maintainTool: ToolDef = {
 
     const entryByPath = new Map(state.entries.map((e) => [e.path, e]));
     const stale = facts.drift.filter((d) => d.kind === "stale").map((d) => d.path);
+
+    // ⓪ 索引格式损坏优先 —— 此时任何 cos_update 都会被拒绝（会丢数据），
+    // 所以必须先让模型把坏行修好，而不是继续创作新 Entry。
+    if (state.malformed.length > 0) {
+      return {
+        nextAction: "repair_required",
+        phase: "malformed_volume",
+        message:
+          `索引里有 ${state.malformed.length} 行无法解析成 Entry。` +
+          `在修好之前 cos_update 会拒绝写入（重写会把它们永久抹掉）。`,
+        targets: state.malformed.slice(0, limit).map((m) => ({
+          line: m.line,
+          text: m.text,
+          action: "repair_or_delete",
+        })),
+        remaining: Math.max(0, state.malformed.length - limit),
+        hint:
+          `合法行只有三类：注释（# 开头）、目录段头（===/<repository>/<dir>/===）、` +
+          `Entry（name[TAG]: F:.. | R:.. | A:.. | S:..）。` +
+          `请手工修正这一行，或确认它已无用后整行删除。`,
+      };
+    }
 
     // ① 待删除优先：Entry 指向的对象已经不该被索引了
     if (facts.needRemoval.length > 0) {

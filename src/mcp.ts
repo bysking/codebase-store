@@ -16,6 +16,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import type { ZodRawShape } from "zod";
 import { CosError } from "./core.ts";
+import { VERSION as COS_VERSION } from "./version.ts";
 
 export interface ToolContext {
   /** 本次调用生效的仓库根 */
@@ -41,7 +42,7 @@ export interface ToolDef {
 /** 每次调用重新解析仓库，让一份配置服务多个项目 */
 export type RootResolver = () => string;
 
-const SERVER_INFO = { name: "cos", version: "0.1.0" };
+const SERVER_INFO = { name: "cos", version: COS_VERSION };
 
 function log(...args: unknown[]): void {
   // stdout 归 SDK 用于 JSON-RPC，日志只能走 stderr

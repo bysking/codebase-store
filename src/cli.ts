@@ -9,12 +9,17 @@
 import { resolve } from "node:path";
 import { existsSync } from "node:fs";
 import { CosError, DATA_DIR, INDEX_PATH } from "./core.ts";
+import { VERSION as COS_VERSION } from "./version.ts";
 import { findRepoRoot, findInitializedRoot, isInitialized } from "./repo.ts";
 import { cmdInit, cmdScan, cmdVerify, cmdCheck, cmdStatus } from "./commands.ts";
-import { runMcpServer } from "./mcp.ts";
-import { TOOLS } from "./tools.ts";
+// 注意：mcp.ts / tools.ts 必须**懒加载**，不能在模块顶层 import。
+//
+// 静态 import @modelcontextprotocol/sdk 会让 Bun 在 CLI 退出路径上静默丢弃
+// 尚未 flush 的 stdout —— `cos verify --json | jq` 只会拿到 64 KB 就断掉。
+// 让 SDK 只在真正跑 mcp 时才被加载，才保得住管道输出完整性。
+// （回归：verify --json | wc -c 必须等于重定向到文件的大小）
 
-const VERSION = "0.1.0";
+const VERSION = COS_VERSION;
 
 const HELP = `cos ${VERSION} — 仓库认知索引 MCP
 
@@ -115,6 +120,11 @@ async function main(): Promise<number> {
 
   // ── mcp：仓库可以延迟到每次调用时解析 ──────────────────────────
   if (args.command === "mcp") {
+    // 懒加载：只在这里才把 MCP SDK 拉进进程（见文件顶部注释）
+    const [{ runMcpServer }, { TOOLS }] = await Promise.all([
+      import("./mcp.ts"),
+      import("./tools.ts"),
+    ]);
     if (args.repo) {
       const fixed = resolve(args.repo);
       if (!existsSync(fixed)) {
@@ -171,7 +181,10 @@ async function main(): Promise<number> {
   }
 }
 
-main().then((code) => process.exit(code)).catch((err) => {
+// 用 exitCode 而不是 process.exit()：
+// process.exit 会立刻杀进程，尚未 flush 的 stdout 直接丢弃（`| jq` 拿到半截 JSON）。
+// 设 exitCode 让事件循环自然收尾，输出完整落地后再退出。
+main().then((code) => { process.exitCode = code; }).catch((err) => {
   console.error(err instanceof CosError ? err.message : err);
-  process.exit(2);
+  process.exitCode = 2;
 });

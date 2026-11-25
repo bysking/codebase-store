@@ -1,92 +1,22 @@
 #!/usr/bin/env node
-
-// src/cli.ts
-import { resolve as resolve3 } from "path";
-import { existsSync as existsSync4 } from "fs";
-
-// src/core.ts
-var DATA_DIR = ".codebase_store";
-var INDEX_PATH = `${DATA_DIR}/cos.txt`;
-var META_PATH = `${DATA_DIR}/cos.meta.txt`;
-var CODE_PATH = `${DATA_DIR}/cos.code.txt`;
-var CONFIG_PATH = `${DATA_DIR}/config.json`;
-var BASELINE_PATH = `${DATA_DIR}/baseline.json`;
-var MAX_FRAME_BYTES = 16 * 1024 * 1024;
-var MAX_FILE_BYTES = 4 * 1024 * 1024;
-class CosError extends Error {
-  code;
-  constructor(message, code = "cos_error") {
-    super(message);
-    this.code = code;
-    this.name = "CosError";
-  }
+var __defProp = Object.defineProperty;
+var __returnValue = (v) => v;
+function __exportSetter(name, newValue) {
+  this[name] = __returnValue.bind(null, newValue);
 }
-
-// src/repo.ts
-import { join, resolve, sep } from "node:path";
-import {
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  statSync,
-  rmSync,
-  readFileSync,
-  writeFileSync,
-  renameSync
-} from "node:fs";
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, {
+      get: all[name],
+      enumerable: true,
+      configurable: true,
+      set: __exportSetter.bind(all, name)
+    });
+};
+var __esm = (fn, res) => () => (fn && (res = fn(fn = 0)), res);
 
 // src/core.ts
 import { createHash } from "node:crypto";
-var ROOT_MARKER = "#COS-ROOT-MANIFEST: 1";
-var META_MARKER = "#COS-META-VOLUME: 1";
-var CODE_MARKER = "#COS-CODE-VOLUME: 1";
-var FORMAT_VERSION = "cognition-volumes/v1";
-var OBJECT_PROTOCOL = "cognition-object/v1";
-var DATA_DIR2 = ".codebase_store";
-var INDEX_PATH2 = `${DATA_DIR2}/cos.txt`;
-var META_PATH2 = `${DATA_DIR2}/cos.meta.txt`;
-var CODE_PATH2 = `${DATA_DIR2}/cos.code.txt`;
-var CONFIG_PATH2 = `${DATA_DIR2}/config.json`;
-var BASELINE_PATH2 = `${DATA_DIR2}/baseline.json`;
-var META_BASENAME = "cos.meta.txt";
-var CODE_BASENAME = "cos.code.txt";
-var FIELD_QUOTA = {
-  high: { f: 300, r: 240, a: 200, s: 600 },
-  mid: { f: 200, r: 160, a: 140, s: 200 },
-  low: { f: 120, r: 100, a: 90, s: 50 }
-};
-var WHOLE_INDEX_BUDGET = { target: 120000, warning: 180000, max: 240000 };
-var CHUNK_TOKENS_DEFAULT = 7000;
-var CHUNK_TOKENS_MIN = 4000;
-var CHUNK_TOKENS_MAX = 24000;
-var MAX_FRAME_BYTES2 = 16 * 1024 * 1024;
-var DEFAULT_EXCLUDE_DIRS = [
-  "node_modules",
-  "vendor",
-  "dist",
-  "build",
-  "target",
-  ".next",
-  "coverage",
-  "tmp",
-  "uploads",
-  "backup",
-  "backups",
-  "artifacts",
-  ".output",
-  "__pycache__",
-  ".venv",
-  "venv",
-  ".pytest_cache",
-  ".mypy_cache",
-  ".ruff_cache",
-  ".tox",
-  ".nox",
-  "htmlcov",
-  ".git",
-  DATA_DIR2
-];
-var MAX_FILE_BYTES2 = 4 * 1024 * 1024;
 function sha256(data) {
   return createHash("sha256").update(data).digest("hex");
 }
@@ -131,15 +61,55 @@ function splitByBytes(text, maxBytes) {
 function nowIso() {
   return new Date().toISOString();
 }
-
-class CosError2 extends Error {
-  code;
-  constructor(message, code = "cos_error") {
-    super(message);
-    this.code = code;
-    this.name = "CosError";
-  }
-}
+var ROOT_MARKER = "#COS-ROOT-MANIFEST: 1", META_MARKER = "#COS-META-VOLUME: 1", CODE_MARKER = "#COS-CODE-VOLUME: 1", FORMAT_VERSION = "cognition-volumes/v1", OBJECT_PROTOCOL = "cognition-object/v1", DATA_DIR2 = ".codebase_store", INDEX_PATH2, META_PATH2, CODE_PATH2, CONFIG_PATH2, BASELINE_PATH2, META_BASENAME = "cos.meta.txt", CODE_BASENAME = "cos.code.txt", FIELD_QUOTA, WHOLE_INDEX_BUDGET, CHUNK_TOKENS_DEFAULT = 7000, CHUNK_TOKENS_MIN = 4000, CHUNK_TOKENS_MAX = 24000, DEFAULT_EXCLUDE_DIRS, MAX_FILE_BYTES2, CosError2;
+var init_core = __esm(() => {
+  INDEX_PATH2 = `${DATA_DIR2}/cos.txt`;
+  META_PATH2 = `${DATA_DIR2}/cos.meta.txt`;
+  CODE_PATH2 = `${DATA_DIR2}/cos.code.txt`;
+  CONFIG_PATH2 = `${DATA_DIR2}/config.json`;
+  BASELINE_PATH2 = `${DATA_DIR2}/baseline.json`;
+  FIELD_QUOTA = {
+    high: { f: 300, r: 240, a: 200, s: 600 },
+    mid: { f: 200, r: 160, a: 140, s: 200 },
+    low: { f: 120, r: 100, a: 90, s: 50 }
+  };
+  WHOLE_INDEX_BUDGET = { target: 120000, warning: 180000, max: 240000 };
+  DEFAULT_EXCLUDE_DIRS = [
+    "node_modules",
+    "vendor",
+    "dist",
+    "build",
+    "target",
+    ".next",
+    "coverage",
+    "tmp",
+    "uploads",
+    "backup",
+    "backups",
+    "artifacts",
+    ".output",
+    "__pycache__",
+    ".venv",
+    "venv",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".tox",
+    ".nox",
+    "htmlcov",
+    ".git",
+    DATA_DIR2
+  ];
+  MAX_FILE_BYTES2 = 4 * 1024 * 1024;
+  CosError2 = class CosError2 extends Error {
+    code;
+    constructor(message, code = "cos_error") {
+      super(message);
+      this.code = code;
+      this.name = "CosError";
+    }
+  };
+});
 
 // src/format.ts
 function parseTag(raw) {
@@ -156,7 +126,6 @@ function quotaBand(c) {
     return "mid";
   return "low";
 }
-var ENTRY_RE = /^(.+?)\[([A-Z][A-Z][1-9](?:[A-Z])?[LMST])\]:\s*F:(.*?)\s*\|\s*R:(.*?)\s*\|\s*A:(.*?)\s*\|\s*S:(.*)$/;
 function parseEntryLine(line, dirPath) {
   if (line.startsWith("#") && !ENTRY_RE.test(line))
     return null;
@@ -175,7 +144,7 @@ function basename(p) {
   const i = p.lastIndexOf("/");
   return i < 0 ? p : p.slice(i + 1);
 }
-function dirname(p) {
+function dirname2(p) {
   const i = p.lastIndexOf("/");
   return i < 0 ? "" : p.slice(0, i);
 }
@@ -198,11 +167,18 @@ function parseCodeVolume(text) {
   const lines = text.split(/\r?\n/);
   const entries = [];
   const order = [];
+  const malformed = [];
   let dir = "";
   let sawMarker = false;
-  for (const line of lines) {
-    if (line.startsWith("#") && !sawMarker && line.includes("COS-CODE-VOLUME")) {
-      sawMarker = true;
+  for (let i = 0;i < lines.length; i++) {
+    const line = lines[i];
+    if (line.trim() === "")
+      continue;
+    const e = parseEntryLine(line, dir);
+    if (e) {
+      entries.push(e);
+      if (!order.includes(dir))
+        order.push(dir);
       continue;
     }
     const sec = parseSectionHeader(line);
@@ -212,19 +188,19 @@ function parseCodeVolume(text) {
         order.push(dir);
       continue;
     }
-    const e = parseEntryLine(line, dir);
-    if (e) {
-      entries.push(e);
-      if (!order.includes(dir))
-        order.push(dir);
+    if (line.startsWith("#")) {
+      if (!sawMarker && line.includes("COS-CODE-VOLUME"))
+        sawMarker = true;
+      continue;
     }
+    malformed.push({ line: i + 1, text: line });
   }
-  return { entries, order };
+  return { entries, order, malformed };
 }
 function renderCodeVolume(entries, dirOrder) {
   const byDir = new Map;
   for (const e of entries) {
-    const d = dirname(e.path);
+    const d = dirname2(e.path);
     if (!byDir.has(d))
       byDir.set(d, []);
     byDir.get(d).push(e);
@@ -318,39 +294,14 @@ function renderMeta() {
   ].join(`
 `);
 }
+var ENTRY_RE;
+var init_format = __esm(() => {
+  init_core();
+  ENTRY_RE = /^(.+?)\[([A-Z][A-Z][1-9](?:[A-Z])?[LMST])\]:\s*F:(.*?)\s*\|\s*R:(.*?)\s*\|\s*A:(.*?)\s*\|\s*S:(.*)$/;
+});
 
 // src/repo.ts
-function findRepoRoot(start = process.cwd()) {
-  let cur = resolve(start);
-  for (;; ) {
-    if (existsSync(join(cur, ".git")))
-      return cur;
-    const parent = resolve(cur, "..");
-    if (parent === cur)
-      return resolve(start);
-    cur = parent;
-  }
-}
-function isInitialized(dir) {
-  return existsSync(join(dir, DATA_DIR2, "cos.txt"));
-}
-function findInitializedRoot(start = process.cwd()) {
-  let cur = resolve(start);
-  for (;; ) {
-    if (isInitialized(cur))
-      return cur;
-    const parent = resolve(cur, "..");
-    if (parent === cur)
-      return null;
-    cur = parent;
-  }
-}
-
-// src/commands.ts
-import { join as join3 } from "node:path";
-
-// src/repo.ts
-import { join as join2, resolve as resolve2, sep as sep2 } from "node:path";
+import { join as join3, resolve as resolve2, sep as sep2, dirname as dirname4 } from "node:path";
 import { spawnSync } from "node:child_process";
 import {
   existsSync as existsSync2,
@@ -358,24 +309,24 @@ import {
   readdirSync as readdirSync2,
   statSync as statSync2,
   rmSync as rmSync2,
-  readFileSync as readFileSync2,
+  readFileSync as readFileSync3,
   writeFileSync as writeFileSync2,
-  renameSync as renameSync2
+  renameSync as renameSync2,
+  openSync as openSync2,
+  readSync as readSync2,
+  closeSync as closeSync2
 } from "node:fs";
 function isGitRepo(root) {
-  return existsSync2(join2(root, ".git"));
+  return existsSync2(join3(root, ".git"));
 }
 function dataDirAbs(root) {
-  return join2(root, DATA_DIR2);
+  return join3(root, DATA_DIR2);
 }
 function defaultConfig() {
   return {
     version: 1,
-    locale: "zh-CN",
-    indexPath: INDEX_PATH2,
     excludeDirs: [...DEFAULT_EXCLUDE_DIRS],
     chunkTokens: CHUNK_TOKENS_DEFAULT,
-    refreshThreshold: 30,
     scopeRules: [
       { action: "exclude", pattern: "**/*.lock", reason: "锁文件是生成产物，无系统语义" },
       { action: "exclude", pattern: "**/*.png", reason: "图片是二进制资产，索引无法承载语义" },
@@ -386,26 +337,34 @@ function defaultConfig() {
   };
 }
 function readConfig(root) {
-  const p = join2(root, CONFIG_PATH2);
+  const p = join3(root, CONFIG_PATH2);
   if (!existsSync2(p))
     throw new CosError2(`未初始化：缺少 ${CONFIG_PATH2}。先运行 cos init`, "not_initialized");
-  return { ...defaultConfig(), ...JSON.parse(readText(p)) };
+  const raw = JSON.parse(readText(p));
+  const OBSOLETE = ["locale", "indexPath", "refreshThreshold"];
+  const stale = OBSOLETE.filter((k) => (k in raw));
+  if (stale.length > 0) {
+    process.stderr.write(`[cos] 警告：${CONFIG_PATH2} 里的 ${stale.join(" / ")} 已废弃且从未生效，可以删掉。` + `（真实生效的配置只有 excludeDirs / chunkTokens / scopeRules）
+`);
+    for (const k of stale)
+      delete raw[k];
+  }
+  return { ...defaultConfig(), ...raw };
 }
 function writeConfig(root, cfg) {
   mkdirSync2(dataDirAbs(root), { recursive: true });
-  writeAtomic(join2(root, CONFIG_PATH2), JSON.stringify(cfg, null, 2) + `
+  writeAtomic(join3(root, CONFIG_PATH2), JSON.stringify(cfg, null, 2) + `
 `);
 }
 function readText(p) {
-  return readFileSync2(p, "utf8");
+  return readFileSync3(p, "utf8");
 }
 function fileBytes(p) {
-  return new Uint8Array(readFileSync2(p));
+  return new Uint8Array(readFileSync3(p));
 }
 function writeAtomic(p, content) {
-  const dir = p.slice(0, p.lastIndexOf(sep2));
-  if (dir)
-    mkdirSync2(dir, { recursive: true });
+  const dir = dirname4(p);
+  mkdirSync2(dir === "" ? "." : dir, { recursive: true });
   const tmp = `${p}.tmp-${process.pid}-${Date.now()}`;
   try {
     writeFileSync2(tmp, content, "utf8");
@@ -416,6 +375,25 @@ function writeAtomic(p, content) {
     } catch {}
     throw err;
   }
+}
+function assertRepoRelativePath(p) {
+  if (isSafeRepoRelative(p))
+    return;
+  if (!p)
+    throw new CosError2(`对象路径不能为空`, "bad_path");
+  if (p.startsWith("/") || /^[A-Za-z]:[\\/]/.test(p)) {
+    throw new CosError2(`对象路径 "${p}" 必须是仓库相对路径，不能是绝对路径`, "bad_path");
+  }
+  throw new CosError2(`对象路径 "${p}" 不能包含 ..`, "bad_path");
+}
+function isSafeRepoRelative(p) {
+  if (!p)
+    return false;
+  if (p.startsWith("/") || /^[A-Za-z]:[\\/]/.test(p))
+    return false;
+  if (p.split("/").some((seg) => seg === ".."))
+    return false;
+  return true;
 }
 function fileSha(p) {
   if (!existsSync2(p))
@@ -444,7 +422,7 @@ function listFsFiles(root, excludeDirs) {
   const walk = (dir) => {
     let items;
     try {
-      items = readdirSync2(join2(root, dir));
+      items = readdirSync2(join3(root, dir));
     } catch {
       return;
     }
@@ -452,7 +430,7 @@ function listFsFiles(root, excludeDirs) {
       const rel = dir ? `${dir}/${name}` : name;
       let st;
       try {
-        st = statSync2(join2(root, rel));
+        st = statSync2(join3(root, rel));
       } catch {
         continue;
       }
@@ -468,6 +446,9 @@ function listFsFiles(root, excludeDirs) {
   return out;
 }
 function globToRe(pattern) {
+  const cached = globCache2.get(pattern);
+  if (cached)
+    return cached;
   let re = "";
   let i = 0;
   while (i < pattern.length) {
@@ -491,7 +472,9 @@ function globToRe(pattern) {
       i++;
     }
   }
-  return new RegExp(`^${re}$`);
+  const compiled = new RegExp(`^${re}$`);
+  globCache2.set(pattern, compiled);
+  return compiled;
 }
 function resolveRole(path, cfg) {
   if (path === DATA_DIR2 || path.startsWith(DATA_DIR2 + "/"))
@@ -510,7 +493,7 @@ function resolveRole(path, cfg) {
   return "index";
 }
 function isIndexableSource(root, path) {
-  const full = join2(root, path);
+  const full = join3(root, path);
   let st;
   try {
     st = statSync2(full);
@@ -521,34 +504,88 @@ function isIndexableSource(root, path) {
     return { ok: false, reason: "empty" };
   if (st.size > MAX_FILE_BYTES2)
     return { ok: false, reason: "oversize" };
-  if (isBinary(fileBytes(full)))
+  if (isBinary(readHead(full, 8000)))
     return { ok: false, reason: "binary" };
   return { ok: true };
 }
+function readHead(fullPath, bytes) {
+  try {
+    const fd = openSync2(fullPath, "r");
+    try {
+      const buf = Buffer.alloc(bytes);
+      const n = readSync2(fd, buf, 0, bytes, 0);
+      return new Uint8Array(buf.subarray(0, n));
+    } finally {
+      closeSync2(fd);
+    }
+  } catch {
+    return new Uint8Array(0);
+  }
+}
 function emptyBaseline() {
-  return { version: 1, files: {}, entries: {}, source: {}, updatedAt: nowIso() };
+  return { version: 2, stamps: {}, entries: {}, source: {}, updatedAt: nowIso() };
 }
 function readBaseline(root) {
-  const p = join2(root, BASELINE_PATH2);
+  const p = join3(root, BASELINE_PATH2);
   if (!existsSync2(p))
     return emptyBaseline();
   try {
-    return { ...emptyBaseline(), ...JSON.parse(readText(p)) };
+    const raw = JSON.parse(readText(p));
+    const base = emptyBaseline();
+    const stamps = { ...base.stamps };
+    const legacyFiles = raw.files;
+    if (legacyFiles && typeof legacyFiles === "object") {
+      for (const [path, sha] of Object.entries(legacyFiles)) {
+        if (typeof sha === "string")
+          stamps[path] = { sha, size: -1, mtimeMs: -1 };
+      }
+    }
+    const rawStamps = raw.stamps;
+    if (rawStamps && typeof rawStamps === "object")
+      Object.assign(stamps, rawStamps);
+    return {
+      version: 2,
+      stamps,
+      entries: raw.entries ?? {},
+      source: raw.source ?? {},
+      updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : nowIso()
+    };
   } catch {
     throw new CosError2(`${BASELINE_PATH2} 损坏，无法解析`, "bad_baseline");
   }
 }
+function stampFile(fullPath) {
+  try {
+    const st = statSync2(fullPath);
+    return { sha: sha256(fileBytes(fullPath)), size: st.size, mtimeMs: st.mtimeMs };
+  } catch {
+    return null;
+  }
+}
+function fileChanged(fullPath, prev) {
+  let st;
+  try {
+    st = statSync2(fullPath);
+  } catch {
+    return true;
+  }
+  if (prev && prev.size === st.size && prev.mtimeMs === st.mtimeMs && prev.size >= 0) {
+    return false;
+  }
+  const cur = fileSha(fullPath);
+  return cur === null || !prev || prev.sha !== cur;
+}
 function writeBaseline(root, b) {
   b.updatedAt = nowIso();
   mkdirSync2(dataDirAbs(root), { recursive: true });
-  writeAtomic(join2(root, BASELINE_PATH2), JSON.stringify(b, null, 2) + `
+  writeAtomic(join3(root, BASELINE_PATH2), JSON.stringify(b, null, 2) + `
 `);
 }
 function loadState(root) {
   const cfg = readConfig(root);
-  const rootP = join2(root, INDEX_PATH2);
-  const metaP = join2(root, META_PATH2);
-  const codeP = join2(root, CODE_PATH2);
+  const rootP = join3(root, INDEX_PATH2);
+  const metaP = join3(root, META_PATH2);
+  const codeP = join3(root, CODE_PATH2);
   if (!existsSync2(rootP))
     throw new CosError2(`缺少 ${INDEX_PATH2}，先运行 cos init`, "not_initialized");
   if (!existsSync2(metaP))
@@ -557,6 +594,12 @@ function loadState(root) {
   const metaText = readText(metaP);
   const codeText = existsSync2(codeP) ? readText(codeP) : "";
   const doc = parseCodeVolume(codeText);
+  const unsafe = doc.entries.filter((e) => !isSafeRepoRelative(e.path));
+  if (unsafe.length > 0) {
+    throw new CosError2(`${CODE_PATH2} 里有 ${unsafe.length} 条 Entry 的路径不是仓库相对路径：` + unsafe.slice(0, 5).map((e) => `
+  ${e.path}`).join("") + `
+绝对路径或以 .. 开头的路径会让索引指到仓库外。请改回仓库相对路径。`, "unsafe_entry_path");
+  }
   return {
     root,
     cfg,
@@ -565,6 +608,7 @@ function loadState(root) {
     codeText,
     entries: doc.entries,
     dirOrder: doc.order,
+    malformed: doc.malformed,
     baseline: readBaseline(root)
   };
 }
@@ -591,26 +635,30 @@ function collectFacts(state) {
       continue;
     indexable.add(f);
   }
+  for (const bad of state.malformed) {
+    drift.push({ kind: "malformed", path: `L${bad.line}: ${bad.text}` });
+  }
   for (const e of entries) {
-    if (!existsSync2(join2(root, e.path)))
+    if (!existsSync2(join3(root, e.path)))
       drift.push({ kind: "missing", path: e.path });
   }
   for (const e of entries) {
-    if (!existsSync2(join2(root, e.path)))
+    if (!existsSync2(join3(root, e.path)))
       continue;
     if (resolveRole(e.path, cfg) !== "index")
       drift.push({ kind: "orphan", path: e.path });
   }
   for (const e of entries) {
-    const full = join2(root, e.path);
+    const full = join3(root, e.path);
     if (!existsSync2(full))
       continue;
-    if (baseline.files[e.path] && baseline.files[e.path] !== sha256(fileBytes(full))) {
+    const prev = baseline.stamps[e.path];
+    if (prev && fileChanged(full, prev)) {
       drift.push({ kind: "stale", path: e.path });
     }
   }
   for (const f of indexable) {
-    if (!baseline.files[f])
+    if (!baseline.stamps[f])
       drift.push({ kind: "unbaselined", path: f });
   }
   for (const e of entries) {
@@ -627,16 +675,21 @@ function collectFacts(state) {
   });
   const needAuthoring = [...indexable].filter((p) => !entryByPath.has(p)).sort();
   const needRemoval = [
-    ...entries.filter((e) => !existsSync2(join2(root, e.path))).map((e) => e.path),
-    ...entries.filter((e) => existsSync2(join2(root, e.path)) && resolveRole(e.path, cfg) !== "index").map((e) => e.path)
+    ...entries.filter((e) => !existsSync2(join3(root, e.path))).map((e) => e.path),
+    ...entries.filter((e) => existsSync2(join3(root, e.path)) && resolveRole(e.path, cfg) !== "index").map((e) => e.path)
   ].sort();
   const quotaViolations = entries.flatMap((e) => validateEntry(e));
   const tokens = estimateTokens(state.rootText + state.metaText + state.codeText);
+  const hasBaseline = Object.keys(baseline.stamps).length > 0;
   let alignment = "aligned";
-  if (tokens > 240000)
+  if (tokens > WHOLE_INDEX_BUDGET.max)
     alignment = "budget_exceeded";
+  else if (!hasBaseline)
+    alignment = "unbaselined";
+  else if (state.malformed.length > 0)
+    alignment = "authoring_required";
   else if (needAuthoring.length > 0)
-    alignment = needAuthoring.length === indexable.size ? "unbaselined" : "authoring_required";
+    alignment = "authoring_required";
   else if (needRemoval.length > 0)
     alignment = "authoring_required";
   else if (dedup.some((d) => d.kind === "stale"))
@@ -651,20 +704,29 @@ function collectFacts(state) {
     tokens,
     quotaViolations,
     needAuthoring,
-    needRemoval
+    needRemoval,
+    hasBaseline
   };
 }
 function commitEntries(state, upserts, removals, expectSha) {
   const { root } = state;
-  const codeP = join2(root, CODE_PATH2);
+  const codeP = join3(root, CODE_PATH2);
   const currentSha = existsSync2(codeP) ? sha256(readText(codeP)) : null;
+  if (state.malformed.length > 0) {
+    throw new CosError2(`${CODE_PATH2} 有 ${state.malformed.length} 行无法解析成 Entry，重写会永久丢掉它们。` + `请先手工修复这些行：` + state.malformed.slice(0, 5).map((m) => `
+  L${m.line}: ${m.text}`).join("") + (state.malformed.length > 5 ? `
+  …… 还有 ${state.malformed.length - 5} 行` : "") + `
+（合法行只有三类：注释 / ===/<repository>/<dir>/=== / name[TAG]: F:.. | R:.. | A:.. | S:..）`, "malformed_volume");
+  }
+  const snapshotSha = state.codeText === "" && currentSha === null ? null : sha256(state.codeText);
+  if (snapshotSha !== currentSha) {
+    throw new CosError2(`CAS 失败：${CODE_PATH2} 在你读取之后被改动过（快照 ${(snapshotSha ?? "空").slice(0, 12)}，` + `磁盘 ${(currentSha ?? "空").slice(0, 12)}）。请重新读取后再写。`, "cas_conflict");
+  }
   if (expectSha !== null && currentSha !== expectSha) {
     throw new CosError2(`CAS 失败：${CODE_PATH2} 已被修改，请重新读取后再写`, "cas_conflict");
   }
   for (const e of upserts) {
-    if (!e.path || e.path.startsWith("/") || e.path.includes("..")) {
-      throw new CosError2(`对象路径 "${e.path}" 必须是仓库相对路径且不含 ..`, "bad_path");
-    }
+    assertRepoRelativePath(e.path);
     const problems = validateRelations(e.r);
     if (problems.length)
       throw new CosError2(`${e.path}: ${problems.join("; ")}`, "bad_relation");
@@ -673,6 +735,8 @@ function commitEntries(state, upserts, removals, expectSha) {
       throw new CosError2(`${e.path}: 配额超限 ` + viol.map((v) => `${v.field} ${v.actual}>${v.limit}`).join(", ") + `。S 字段两问：能推断的不写，删了不出事的不写 —— 请收紧而不是放宽上限。`, "quota_exceeded");
     }
   }
+  for (const p of removals)
+    assertRepoRelativePath(p);
   const removalSet = new Set(removals);
   const upsertMap = new Map(upserts.map((e) => [e.path, e]));
   const next = [];
@@ -689,15 +753,17 @@ function commitEntries(state, upserts, removals, expectSha) {
   writeAtomic(codeP, text);
   const baseline = readBaseline(root);
   for (const e of next) {
-    const full = join2(root, e.path);
+    const full = join3(root, e.path);
     if (existsSync2(full)) {
-      baseline.files[e.path] = sha256(fileBytes(full));
+      const stamp = stampFile(full);
+      if (stamp)
+        baseline.stamps[e.path] = stamp;
     }
     baseline.entries[e.path] = sha256(JSON.stringify(e));
     baseline.source[e.path] = "indexed";
   }
   for (const p of removals) {
-    delete baseline.files[p];
+    delete baseline.stamps[p];
     delete baseline.entries[p];
     delete baseline.source[p];
   }
@@ -706,7 +772,7 @@ function commitEntries(state, upserts, removals, expectSha) {
 }
 function initRepo(root, force) {
   const created = [];
-  const rootP = join2(root, INDEX_PATH2);
+  const rootP = join3(root, INDEX_PATH2);
   if (existsSync2(rootP) && !force) {
     throw new CosError2(`${INDEX_PATH2} 已存在。用 --force 覆盖（会清空已有认知）。`, "already_initialized");
   }
@@ -721,21 +787,22 @@ function initRepo(root, force) {
 `]
   ];
   for (const [p, content] of files) {
-    writeAtomic(join2(root, p), content);
+    writeAtomic(join3(root, p), content);
     created.push(p);
   }
   writeConfig(root, defaultConfig());
   created.push(CONFIG_PATH2);
-  if (!existsSync2(join2(root, BASELINE_PATH2))) {
+  const baselineP = join3(root, BASELINE_PATH2);
+  if (force || !existsSync2(baselineP)) {
     writeBaseline(root, emptyBaseline());
     created.push(BASELINE_PATH2);
   }
-  const agentsP = join2(root, "AGENTS.md");
+  const agentsP = join3(root, "AGENTS.md");
   const existing = existsSync2(agentsP) ? readText(agentsP) : "";
   const block = renderAgentsBlock(project);
   writeAtomic(agentsP, upsertBlock(existing, block));
   created.push("AGENTS.md");
-  const giP = join2(root, ".gitignore");
+  const giP = join3(root, ".gitignore");
   const gi = existsSync2(giP) ? readText(giP) : "";
   const need = [`${DATA_DIR2}/*.tmp-*`, ".mcp.json", ".claude/settings.local.json"];
   const lines = gi.split(/\r?\n/);
@@ -755,8 +822,8 @@ function scanRepo(root, force) {
   const cfg = readConfig(root);
   const state = loadState(root);
   const baseline = readBaseline(root);
-  if (Object.keys(baseline.files).length > 0 && !force) {
-    throw new CosError2(`基线已存在（${Object.keys(baseline.files).length} 个文件）。` + `新增/移除受管范围请改 ${CONFIG_PATH2} 的 scopeRules，而不是 scan --force。` + `只想刷新指纹用 cos_update 重提交，或 scan --force 明确重建。`, "baseline_exists");
+  if (Object.keys(baseline.stamps).length > 0 && !force) {
+    throw new CosError2(`基线已存在（${Object.keys(baseline.stamps).length} 个文件）。` + `新增/移除受管范围请改 ${CONFIG_PATH2} 的 scopeRules，而不是 scan --force。` + `只想刷新指纹用 cos_update 重提交，或 scan --force 明确重建。`, "baseline_exists");
   }
   const gitFiles = listGitFiles(root);
   const allFiles = gitFiles ?? listFsFiles(root, cfg.excludeDirs);
@@ -767,11 +834,13 @@ function scanRepo(root, force) {
     const role = resolveRole(f, cfg);
     if (role === "exclude")
       continue;
-    const full = join2(root, f);
+    const full = join3(root, f);
     if (!existsSync2(full))
       continue;
     try {
-      baseline.files[f] = sha256(fileBytes(full));
+      const stamp = stampFile(full);
+      if (stamp)
+        baseline.stamps[f] = stamp;
       baseline.source[f] = role === "index" ? "indexed" : "observed";
       n++;
     } catch {}
@@ -782,8 +851,6 @@ function scanRepo(root, force) {
   writeBaseline(root, baseline);
   return { files: n, entries: state.entries.length };
 }
-var BLOCK_START = "<!-- cos:rules:start -->";
-var BLOCK_END = "<!-- cos:rules:end -->";
 function renderAgentsBlock(project) {
   return `${BLOCK_START}
 ## 仓库认知索引（cos）
@@ -837,181 +904,53 @@ function upsertBlock(existing, block) {
 `) + block + `
 `;
 }
+var globCache2, BLOCK_START = "<!-- cos:rules:start -->", BLOCK_END = "<!-- cos:rules:end -->";
+var init_repo = __esm(() => {
+  init_core();
+  init_format();
+  globCache2 = new Map;
+});
 
-// src/commands.ts
-var C = {
-  dim: (s) => `\x1B[2m${s}\x1B[0m`,
-  bold: (s) => `\x1B[1m${s}\x1B[0m`,
-  green: (s) => `\x1B[32m${s}\x1B[0m`,
-  yellow: (s) => `\x1B[33m${s}\x1B[0m`,
-  red: (s) => `\x1B[31m${s}\x1B[0m`,
-  cyan: (s) => `\x1B[36m${s}\x1B[0m`
-};
-function cmdInit(root, flags) {
+// src/version.ts
+import { readFileSync as readFileSync4 } from "node:fs";
+import { dirname as dirname5, join as join5 } from "node:path";
+import { fileURLToPath as fileURLToPath2 } from "node:url";
+function readVersion2() {
+  const candidates = [];
+  const bunDir = import.meta.dir;
+  if (typeof bunDir === "string" && bunDir)
+    candidates.push(bunDir);
   try {
-    const { created } = initRepo(root, flags.force === true);
-    console.log(C.green("✓") + ` 初始化完成：${root}`);
-    console.log(C.dim(`  数据全部存放在 ${DATA_DIR2}/ 下（该目录应随 Git 一起提交）`));
-    for (const f of created)
-      console.log(`  ${C.dim("+")} ${f}`);
-    console.log("");
-    console.log(C.bold("下一步："));
-    console.log("  1. " + C.cyan("cos scan") + "  建立基线（按 git ignore 权威枚举文件）");
-    console.log("  2. 在 Agent 里加 MCP 配置（见下方片段），重启 Agent");
-    console.log("  3. 对 Agent 说：" + C.cyan("「读 cos_rules，然后建立索引」"));
-    console.log("");
-    console.log(C.bold("MCP 配置（Claude Code: .mcp.json）"));
-    console.log(C.dim(JSON.stringify({
-      mcpServers: {
-        cos: { command: "npx", args: ["-y", "@bysking/codebase-store", "mcp"] }
-      }
-    }, null, 2)));
-    console.log("");
-    console.log(C.dim("  没写 --repo：server 会按宿主 cwd 向上找 .codebase_store，多项目共用一份配置。"));
-    console.log(C.dim('  若宿主不保证 cwd 在项目内，再显式加 "--repo", "' + root + '"。'));
-    console.log(C.dim('  已全局安装的话，可把 command 改成 "cos"、args 改成 ["mcp"]。'));
-    return 0;
-  } catch (err) {
-    return fail(err);
+    candidates.push(dirname5(fileURLToPath2(import.meta.url)));
+  } catch {}
+  for (const start of candidates) {
+    let dir = start;
+    for (let i = 0;i < 6; i++) {
+      try {
+        const pkg = JSON.parse(readFileSync4(join5(dir, "package.json"), "utf8"));
+        if (typeof pkg.version === "string" && pkg.version)
+          return pkg.version;
+      } catch {}
+      const parent = dirname5(dir);
+      if (parent === dir)
+        break;
+      dir = parent;
+    }
   }
+  return "unknown";
 }
-function cmdScan(root, flags) {
-  try {
-    const r = scanRepo(root, flags.force === true);
-    console.log(C.green("✓") + ` 基线建立：${r.files} 个文件，${r.entries} 条已有 Entry`);
-    console.log(C.dim("  Git ignore 是文件来源的唯一权威，未追踪被忽略的文件不会进来。"));
-    return 0;
-  } catch (err) {
-    return fail(err);
-  }
-}
-function cmdVerify(root, flags) {
-  try {
-    const state = loadState(root);
-    const facts = collectFacts(state);
-    if (flags.json) {
-      console.log(JSON.stringify({ alignment: facts.alignment, drift: facts.drift, entries: facts.entries, files: facts.files }, null, 2));
-      return facts.drift.length === 0 ? 0 : 1;
-    }
-    console.log(C.bold("verify") + `  ${state.root}`);
-    console.log("");
-    if (facts.drift.length === 0) {
-      console.log(C.green("  ✓ 无漂移"));
-      return 0;
-    }
-    const groups = new Map;
-    for (const d of facts.drift) {
-      if (!groups.has(d.kind))
-        groups.set(d.kind, []);
-      groups.get(d.kind).push(d.path);
-    }
-    const label = {
-      missing: "Missing（Entry 在，文件不在）",
-      orphan: "Orphan（Entry 在，对象已不是 index 角色）",
-      stale: "Stale（源码变了，Entry 未更新）",
-      unbaselined: "Unbaselined（受管但未进基线 / 无 Entry）"
-    };
-    for (const [kind, paths] of groups) {
-      console.log(C.yellow(`  ${label[kind] ?? kind}`) + C.dim(`  ${paths.length} 项`));
-      for (const p of paths.slice(0, 20))
-        console.log(`    ${p}`);
-      if (paths.length > 20)
-        console.log(C.dim(`    ... 还有 ${paths.length - 20} 项`));
-      console.log("");
-    }
-    return 1;
-  } catch (err) {
-    return fail(err);
-  }
-}
-function cmdCheck(root, flags) {
-  try {
-    const state = loadState(root);
-    const facts = collectFacts(state);
-    const problems = [];
-    if (facts.entries === 0)
-      problems.push("索引为空：还没有任何 Entry。让 Agent 跑 cos_maintain 建索引。");
-    if (facts.tokens > WHOLE_INDEX_BUDGET.max) {
-      problems.push(`索引 ${facts.tokens} token 超过硬上限 ${WHOLE_INDEX_BUDGET.max}。需要裁剪或拆分。`);
-    }
-    for (const v of facts.quotaViolations) {
-      problems.push(`配额超限 ${v.path} 的 ${v.field}：${v.actual} > ${v.limit}`);
-    }
-    if (facts.alignment !== "aligned") {
-      problems.push(`对齐状态是 ${facts.alignment}，期望 aligned（${facts.drift.length} 项漂移）`);
-    }
-    if (flags.json) {
-      console.log(JSON.stringify({
-        ok: problems.length === 0,
-        alignment: facts.alignment,
-        entries: facts.entries,
-        files: facts.files,
-        tokens: facts.tokens,
-        problems
-      }, null, 2));
-      return problems.length === 0 ? 0 : 1;
-    }
-    console.log(C.bold("check") + `  ${state.root}`);
-    console.log("");
-    if (problems.length === 0) {
-      console.log(C.green("  ✓ 通过"));
-      console.log(C.dim(`    ${facts.entries} 条 Entry / ${facts.files} 个受管文件 / ${facts.tokens} token`));
-      return 0;
-    }
-    for (const p of problems)
-      console.log(C.red("  ✗ ") + p);
-    return 1;
-  } catch (err) {
-    return fail(err);
-  }
-}
-function cmdStatus(root) {
-  try {
-    const state = loadState(root);
-    const facts = collectFacts(state);
-    const pct = Math.round(facts.entries / Math.max(1, facts.files) * 100);
-    console.log(C.bold("cos status"));
-    console.log(`  仓库      ${state.root}`);
-    console.log(`  对齐      ${colorAlign(facts.alignment)}`);
-    console.log(`  Entry     ${facts.entries}`);
-    console.log(`  受管文件  ${facts.files}`);
-    console.log(`  覆盖率    ${pct}%`);
-    console.log(`  token     ${facts.tokens} / 目标 ${WHOLE_INDEX_BUDGET.target} / 上限 ${WHOLE_INDEX_BUDGET.max}`);
-    console.log(`  漂移      ${facts.drift.length}`);
-    if (facts.drift.length > 0) {
-      const byKind = {};
-      for (const d of facts.drift)
-        byKind[d.kind] = (byKind[d.kind] ?? 0) + 1;
-      for (const [k, v] of Object.entries(byKind))
-        console.log(`            ${k}: ${v}`);
-    }
-    console.log(`  配额违规  ${facts.quotaViolations.length}`);
-    console.log("");
-    console.log(C.dim("  完整索引：cat " + join3(root, INDEX_PATH2) + " " + join3(root, META_PATH2) + " " + join3(root, CODE_PATH2)));
-    return 0;
-  } catch (err) {
-    return fail(err);
-  }
-}
-function colorAlign(a) {
-  if (a === "aligned")
-    return C.green(a);
-  if (a === "budget_exceeded")
-    return C.red(a);
-  return C.yellow(a);
-}
-function fail(err) {
-  const e = err;
-  console.error(C.red("✗ ") + (e.message ?? String(err)));
-  if (e.code && e.code !== "cos_error")
-    console.error(C.dim(`  code: ${e.code}`));
-  return 2;
-}
+var VERSION2;
+var init_version = __esm(() => {
+  VERSION2 = readVersion2();
+});
 
 // src/mcp.ts
+var exports_mcp = {};
+__export(exports_mcp, {
+  runMcpServer: () => runMcpServer
+});
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-var SERVER_INFO = { name: "cos", version: "0.1.0" };
 function log(...args) {
   process.stderr.write(`[cos] ${args.join(" ")}
 `);
@@ -1077,11 +1016,97 @@ async function runMcpServer(resolveRoot, tools, fixedRoot = null) {
   await server.connect(transport);
   log((fixedRoot ? `stdio server ready, repo=${initialInfo} (固定 --repo)` : `stdio server ready, repo=${initialInfo} (每次调用重新解析)`) + `, tools=${tools.length}`);
 }
+var SERVER_INFO;
+var init_mcp = __esm(() => {
+  init_version();
+  SERVER_INFO = { name: "cos", version: VERSION2 };
+});
 
 // src/tools.ts
-import { join as join4 } from "node:path";
+var exports_tools = {};
+__export(exports_tools, {
+  chunkOverview: () => chunkOverview,
+  TOOLS: () => TOOLS,
+  RULES: () => RULES
+});
+import { join as join6 } from "node:path";
 import { existsSync as existsSync3 } from "node:fs";
 import { z } from "zod";
+function buildOverviewText(state) {
+  return [
+    "<!-- cos:overview:start -->",
+    state.rootText.trimEnd(),
+    "",
+    state.metaText.trimEnd(),
+    "",
+    state.codeText.trimEnd(),
+    "<!-- cos:overview:end -->"
+  ].join(`
+`);
+}
+function chunkOverview(text, chunkTokens) {
+  const tokens = estimateTokens(text);
+  if (tokens <= chunkTokens)
+    return { chunks: [text], tokens };
+  const chunks = [];
+  let cur = [];
+  let curTokens = 0;
+  for (const line of text.split(`
+`)) {
+    const lineTokens = estimateTokens(line);
+    if (lineTokens > chunkTokens) {
+      if (cur.length > 0) {
+        chunks.push(cur.join(`
+`));
+        cur = [];
+        curTokens = 0;
+      }
+      for (const piece of splitByBytes(line, Math.max(1, Math.ceil(Buffer.byteLength(line, "utf8") / lineTokens * chunkTokens)))) {
+        chunks.push(piece);
+      }
+      continue;
+    }
+    if (curTokens + lineTokens > chunkTokens && cur.length > 0) {
+      chunks.push(cur.join(`
+`));
+      cur = [];
+      curTokens = 0;
+    }
+    cur.push(line);
+    curTokens += lineTokens;
+  }
+  if (cur.length > 0)
+    chunks.push(cur.join(`
+`));
+  return { chunks, tokens };
+}
+function clampChunk(n) {
+  if (!Number.isFinite(n))
+    return 7000;
+  return Math.max(CHUNK_TOKENS_MIN, Math.min(CHUNK_TOKENS_MAX, Math.floor(n)));
+}
+function parseCursor(cursor, expectSha) {
+  const [idxStr, sha] = cursor.split(":");
+  if (sha && sha !== expectSha) {
+    throw new CosError2(`cursor 失效：索引在交付期间被修改（cursor sha=${sha}，当前 sha=${expectSha}）。` + `请不带 cursor 重新调 cos_overview。`, "cursor_stale");
+  }
+  const n = Number(idxStr);
+  if (!Number.isInteger(n) || n < 0)
+    throw new CosError2(`非法 cursor "${cursor}"`, "bad_cursor");
+  return n;
+}
+function formatEntry(e) {
+  return `${e.path}[${e.tag}]: F:${e.f} | R:${e.r} | A:${e.a} | S:${e.s}`;
+}
+function suggestTag(path) {
+  for (const k of KEY_WORDS)
+    if (k.re.test(path))
+      return `${k.a}${k.b}5M`;
+  return "CG5M";
+}
+function extractHeaderLines(text) {
+  return text.split(/\r?\n/).filter((l) => l.startsWith("#")).slice(0, 12);
+}
 var RULES_TEXT = `# cos 会话合同
 
 ## 你面对的是什么
@@ -1169,334 +1194,624 @@ var RULES_TEXT = `# cos 会话合同
 - 禁止用 grep / 读源码冒充"已读索引"
 - 禁止在上下文压缩后不复读索引就继续声称掌握系统
 - 禁止把索引正文或摘要塞进 handoff（只留"请重载"指令）
-- 禁止绕过 \`cos_update\` 直接编辑 \`.codebase_store/cos.code.txt\`（手改会被 CAS 冲突挡下）`;
-var rulesTool = {
-  name: "cos_rules",
-  description: "返回会话合同：怎么用这套索引、F/R/A/S 怎么写、配额是多少、什么是禁止的。" + "新会话开始时先读一次。和 aoci_rules 同名同义。",
-  inputSchema: {},
-  needsRepo: false,
-  handler: () => RULES_TEXT
-};
-function buildOverviewText(state) {
-  return [
-    "<!-- cos:overview:start -->",
-    state.rootText.trimEnd(),
-    "",
-    state.metaText.trimEnd(),
-    "",
-    state.codeText.trimEnd(),
-    "<!-- cos:overview:end -->"
-  ].join(`
-`);
-}
-function chunkOverview(text, chunkTokens) {
-  const tokens = estimateTokens(text);
-  if (tokens <= chunkTokens)
-    return { chunks: [text], tokens };
-  const bytesPerToken = Math.max(1, Math.ceil(Buffer.byteLength(text, "utf8") / tokens));
-  const maxBytes = chunkTokens * bytesPerToken;
-  return { chunks: splitByBytes(text, maxBytes), tokens };
-}
-var overviewTool = {
-  name: "cos_overview",
-  description: "交付完整的仓库认知索引（Root + Meta + Code 三个 Volume 的原文）。" + "超预算时切成多块，必须顺 nextCursor 读到最后一个 chunk 才能声称读完。" + "checkOnly=true 返回紧凑检查点，不能替代完整读取。",
-  inputSchema: {
-    cursor: z.string().optional().describe("上一块返回的 nextCursor"),
-    checkOnly: z.boolean().optional().describe("只返回对齐状态等紧凑检查点，不返回索引正文"),
-    chunkTokens: z.number().int().min(CHUNK_TOKENS_MIN).max(CHUNK_TOKENS_MAX).optional().describe(`每块 token 预算，默认取配置，范围 ${CHUNK_TOKENS_MIN}~${CHUNK_TOKENS_MAX}`)
-  },
-  handler: (args, ctx) => {
-    const state = loadState(ctx.root);
-    const facts = collectFacts(state);
-    const cfg = state.cfg;
-    if (args.checkOnly === true) {
+- 禁止绕过 \`cos_update\` 直接编辑 \`.codebase_store/cos.code.txt\`（手改会被 CAS 冲突挡下）`, rulesTool, overviewTool, searchTool, KEY_WORDS, maintainTool, updateTool, reportTool, TOOLS, RULES;
+var init_tools = __esm(() => {
+  init_core();
+  init_format();
+  init_repo();
+  rulesTool = {
+    name: "cos_rules",
+    description: "返回会话合同：怎么用这套索引、F/R/A/S 怎么写、配额是多少、什么是禁止的。" + "新会话开始时先读一次。和 aoci_rules 同名同义。",
+    inputSchema: {},
+    needsRepo: false,
+    handler: () => RULES_TEXT
+  };
+  overviewTool = {
+    name: "cos_overview",
+    description: "交付完整的仓库认知索引（Root + Meta + Code 三个 Volume 的原文）。" + "超预算时切成多块，必须顺 nextCursor 读到最后一个 chunk 才能声称读完。" + "checkOnly=true 返回紧凑检查点，不能替代完整读取。",
+    inputSchema: {
+      cursor: z.string().optional().describe("上一块返回的 nextCursor"),
+      checkOnly: z.boolean().optional().describe("只返回对齐状态等紧凑检查点，不返回索引正文"),
+      chunkTokens: z.number().int().min(CHUNK_TOKENS_MIN).max(CHUNK_TOKENS_MAX).optional().describe(`每块 token 预算，默认取配置，范围 ${CHUNK_TOKENS_MIN}~${CHUNK_TOKENS_MAX}`)
+    },
+    handler: (args, ctx) => {
+      const state = loadState(ctx.root);
+      const cfg = state.cfg;
+      if (args.checkOnly === true) {
+        const facts = collectFacts(state);
+        return {
+          checkOnly: true,
+          alignment: facts.alignment,
+          entries: facts.entries,
+          files: facts.files,
+          tokens: facts.tokens,
+          driftCount: facts.drift.length,
+          quotaViolations: facts.quotaViolations.length,
+          note: "这是紧凑检查点。需要接手开发时请不带 checkOnly 调 cos_overview 读完整索引。"
+        };
+      }
+      const chunkTokens = clampChunk(args.chunkTokens ?? cfg.chunkTokens);
+      const text = buildOverviewText(state);
+      const { chunks, tokens } = chunkOverview(text, chunkTokens);
+      const textSha = sha256(text).slice(0, 12);
+      const startIdx = args.cursor ? parseCursor(args.cursor, textSha) : 0;
+      const idx = Math.min(startIdx, chunks.length - 1);
+      const nextCursor = idx + 1 < chunks.length ? `${idx + 1}:${textSha}` : null;
+      const result = {
+        cursor: `${idx}:${textSha}`,
+        nextCursor,
+        chunkIndex: idx,
+        chunkTotal: chunks.length,
+        content: chunks[idx],
+        tokens: estimateTokens(chunks[idx]),
+        wholeIndexTokens: tokens,
+        budget: WHOLE_INDEX_BUDGET
+      };
+      if (nextCursor) {
+        result.entries = state.entries.length;
+        result.hint = `还有 ${chunks.length - idx - 1} 块。用 cursor="${nextCursor}" 继续读，读到最后一块才算读完。`;
+      } else {
+        const facts = collectFacts(state);
+        result.entries = facts.entries;
+        result.alignment = facts.alignment;
+        result.files = facts.files;
+        result.needAuthoring = facts.needAuthoring.length;
+        result.needRemoval = facts.needRemoval.length;
+        result.complete = true;
+        result.hint = "这是最后一块。你现在持有完整索引。";
+      }
+      return result;
+    }
+  };
+  searchTool = {
+    name: "cos_search",
+    description: "在索引里检索。传 path 精确取单个对象的 Entry；传 query 在 F/R/A/S 与路径上做全文匹配。" + "这不是代码搜索 —— 它只查认知索引，不读源码。",
+    inputSchema: {
+      path: z.string().optional().describe("仓库相对路径，精确取一条 Entry"),
+      query: z.string().optional().describe("全文关键词，匹配路径与 F/R/A/S"),
+      tag: z.string().optional().describe("按标签前缀过滤，如 C 或 CG9"),
+      limit: z.number().int().min(1).max(200).optional().describe("最多返回条数，默认 20")
+    },
+    handler: (args, ctx) => {
+      const state = loadState(ctx.root);
+      const limit = typeof args.limit === "number" ? Math.max(1, Math.min(200, args.limit)) : 20;
+      if (typeof args.path === "string") {
+        const hit = state.entries.find((e) => e.path === args.path);
+        if (!hit) {
+          return { found: false, path: args.path, hint: "该对象还没有 Entry。用 cos_maintain 看它是否在待补列表里。" };
+        }
+        return { found: true, entry: hit, formatted: formatEntry(hit) };
+      }
+      let pool = state.entries;
+      if (typeof args.tag === "string" && args.tag) {
+        const t = args.tag.trim();
+        pool = pool.filter((e) => e.tag.startsWith(t));
+      }
+      if (typeof args.query === "string" && args.query.trim()) {
+        const q = args.query.trim().toLowerCase();
+        pool = pool.filter((e) => e.path.toLowerCase().includes(q) || e.f.toLowerCase().includes(q) || e.r.toLowerCase().includes(q) || e.a.toLowerCase().includes(q) || e.s.toLowerCase().includes(q));
+      }
       return {
-        checkOnly: true,
+        total: pool.length,
+        returned: Math.min(pool.length, limit),
+        entries: pool.slice(0, limit).map((e) => ({ ...e, formatted: formatEntry(e) })),
+        ...pool.length > limit ? { hint: `还有 ${pool.length - limit} 条，用 limit 或加 query 收窄` } : {}
+      };
+    }
+  };
+  KEY_WORDS = [
+    { re: /(^|\/)(package\.json|tsconfig|go\.mod|Cargo\.toml|pyproject)/i, a: "F", b: "C" },
+    { re: /(^|\/)(Dockerfile|Makefile|\.github\/)/i, a: "O", b: "V" },
+    { re: /(^|\/)(test|spec|__tests__)/i, a: "T", b: "Q" },
+    { re: /\.(test|spec)\.[a-z]+$/i, a: "T", b: "Q" },
+    { re: /(^|\/)(auth|login|session|token|permission)/i, a: "I", b: "I" },
+    { re: /(^|\/)(api|route|handler|controller)/i, a: "E", b: "N" },
+    { re: /(^|\/)(db|model|schema|migration|repository)/i, a: "P", b: "D" },
+    { re: /(^|\/)(config|settings|env)/i, a: "F", b: "C" },
+    { re: /(^|\/)(util|common|shared|helper)/i, a: "C", b: "G" }
+  ];
+  maintainTool = {
+    name: "cos_maintain",
+    description: "无参数调用：服务器算出当前该做什么，返回 nextAction。这是权威状态机的唯一入口 —— " + "不要在脚本里复制它。按 nextAction 行动后再调一次拿下一批。",
+    inputSchema: {
+      limit: z.number().int().min(1).max(50).optional().describe("本批最多返回多少个待补对象，默认 10")
+    },
+    handler: (args, ctx) => {
+      const state = loadState(ctx.root);
+      const facts = collectFacts(state);
+      const limit = typeof args.limit === "number" ? Math.max(1, Math.min(50, args.limit)) : 10;
+      const entryByPath = new Map(state.entries.map((e) => [e.path, e]));
+      const stale = facts.drift.filter((d) => d.kind === "stale").map((d) => d.path);
+      if (state.malformed.length > 0) {
+        return {
+          nextAction: "repair_required",
+          phase: "malformed_volume",
+          message: `索引里有 ${state.malformed.length} 行无法解析成 Entry。` + `在修好之前 cos_update 会拒绝写入（重写会把它们永久抹掉）。`,
+          targets: state.malformed.slice(0, limit).map((m) => ({
+            line: m.line,
+            text: m.text,
+            action: "repair_or_delete"
+          })),
+          remaining: Math.max(0, state.malformed.length - limit),
+          hint: `合法行只有三类：注释（# 开头）、目录段头（===/<repository>/<dir>/===）、` + `Entry（name[TAG]: F:.. | R:.. | A:.. | S:..）。` + `请手工修正这一行，或确认它已无用后整行删除。`
+        };
+      }
+      if (facts.needRemoval.length > 0) {
+        const batch = facts.needRemoval.slice(0, limit);
+        return {
+          nextAction: "authoring_required",
+          phase: "removal",
+          message: `有 ${facts.needRemoval.length} 个 Entry 已失效（文件不存在，或对象已不是 index 角色）。` + `本批 ${batch.length} 个，确认后用 removals 删除。`,
+          targets: batch.map((p) => ({ path: p, action: "remove", currentEntry: entryByPath.get(p) ?? null })),
+          remaining: Math.max(0, facts.needRemoval.length - limit),
+          hint: "删之前确认：是对象真的不该被索引，而不是你找错文件了。"
+        };
+      }
+      if (facts.needAuthoring.length > 0) {
+        const batch = facts.needAuthoring.slice(0, limit);
+        const isFirst = facts.entries === 0;
+        return {
+          nextAction: "authoring_required",
+          phase: isFirst ? "first_index" : "incremental",
+          message: isFirst ? `首次建索引。本批 ${batch.length} 个对象（共 ${facts.needAuthoring.length} 个待创作）。` + `逐个读源码后写 Entry，用 cos_update 提交。` : `有 ${facts.needAuthoring.length} 个受管文件还没有 Entry。本批 ${batch.length} 个。`,
+          targets: batch.map((p) => ({
+            path: p,
+            suggestedTag: suggestTag(p),
+            hash: fileSha(join6(ctx.root, p))?.slice(0, 12)
+          })),
+          remaining: Math.max(0, facts.needAuthoring.length - limit),
+          contractReminder: "F 是一个核心职责命题，不是清单；S 必须过两问（能推断的不写，删了不出事的不写）。" + "只写你读过源码的对象；suggestedTag 只是依据路径的起点，必须修正。"
+        };
+      }
+      if (stale.length > 0) {
+        const batch = stale.slice(0, limit);
+        return {
+          nextAction: "review_required",
+          phase: "stale_review",
+          message: `有 ${stale.length} 个对象源码变了，Entry 可能已过期。逐个复查后决定是否更新 F/R/A/S。`,
+          targets: batch.map((p) => ({ path: p, currentEntry: entryByPath.get(p) ?? null })),
+          remaining: Math.max(0, stale.length - limit),
+          hint: "很多改动不影响语义（格式、改名、注释）。确认无变化就用 cos_update 重提交同内容刷新基线。"
+        };
+      }
+      if (facts.quotaViolations.length > 0) {
+        return {
+          nextAction: "review_required",
+          phase: "quota",
+          message: `有 ${facts.quotaViolations.length} 处配额超限。`,
+          targets: facts.quotaViolations.slice(0, limit),
+          hint: "收紧内容，不要拆词凑数。S 两问：能推断的不写，删了不出事的不写。"
+        };
+      }
+      return {
+        nextAction: "none",
+        phase: "aligned",
+        message: "索引与代码一致。没有待处理项。",
+        facts: {
+          entries: facts.entries,
+          files: facts.files,
+          tokens: facts.tokens,
+          alignment: facts.alignment
+        }
+      };
+    }
+  };
+  updateTool = {
+    name: "cos_update",
+    description: "写入或删除索引条目。upserts 里每条是完整 Entry（不是 patch）；" + "removals 是路径数组。会做配额校验、R 引用校验和回读校验，任一失败整批拒绝。" + "传 expectSha 做 CAS（值来自上一次 cos_overview 或 cos_report 的 codeSha）。",
+    inputSchema: {
+      upserts: z.array(z.object({
+        path: z.string().describe("仓库相对路径"),
+        tag: z.string().describe("紧凑标签 A+B+C+[D]+E，如 CG9L"),
+        f: z.string().describe("Function：一个核心职责命题，不是清单"),
+        r: z.string().describe("Relations：code:<path> 逗号分隔，无关系写 -"),
+        a: z.string().describe("API：稳定的对外契约，无则写 -"),
+        s: z.string().describe("Non-obvious：过两问才写，无则写 -")
+      })).optional().describe("要写入的完整 Entry 列表（整条覆盖，不是 patch）"),
+      removals: z.array(z.string()).optional().describe("要删除的对象路径"),
+      expectSha: z.string().optional().describe(".codebase_store/cos.code.txt 的期望 sha256，用于 CAS（值来自 cos_report 的 codeSha）")
+    },
+    handler: (args, ctx) => {
+      const state = loadState(ctx.root);
+      const upserts = args.upserts ?? [];
+      const removals = args.removals ?? [];
+      const expectSha = args.expectSha ?? null;
+      if (upserts.length === 0 && removals.length === 0) {
+        throw new CosError2("upserts 和 removals 都是空的，没有可做的", "no_op");
+      }
+      for (const e of upserts) {
+        const role = resolveRole(e.path, state.cfg);
+        if (role !== "index") {
+          throw new CosError2(`"${e.path}" 在 scope 里是 ${role} 角色，不能写正式 Entry。` + `改 .codebase_store/config.json 的 scopeRules 才能纳入索引。`, "not_indexable");
+        }
+        if (!existsSync3(join6(ctx.root, e.path))) {
+          throw new CosError2(`"${e.path}" 不存在。Entry 必须绑定真实文件。`, "no_such_file");
+        }
+        try {
+          parseTag(e.tag);
+        } catch (err) {
+          throw err;
+        }
+      }
+      const result = commitEntries(state, upserts, removals, expectSha);
+      const after = loadState(ctx.root);
+      const facts = collectFacts(after);
+      return {
+        ok: true,
+        entries: result.entries,
+        codeSha: result.sha,
+        alignment: facts.alignment,
+        remainingDrift: facts.drift.length,
+        nextStep: facts.drift.length === 0 ? "索引已对齐。可以继续开发任务。" : "还有待处理项，再调 cos_maintain 拿下一批。"
+      };
+    }
+  };
+  reportTool = {
+    name: "cos_report",
+    description: "治理报告：对齐状态、漂移清单、配额违规、覆盖统计、Root/Meta 头部信息、codeSha。" + "人看的摘要，也可以用来取 expectSha。",
+    inputSchema: {
+      verbose: z.boolean().optional().describe("包含完整漂移清单，默认只给计数")
+    },
+    handler: (args, ctx) => {
+      const state = loadState(ctx.root);
+      const facts = collectFacts(state);
+      const codeSha = state.codeText ? sha256(state.codeText) : null;
+      const verbose = args.verbose === true;
+      const byKind = {};
+      for (const d of facts.drift)
+        byKind[d.kind] = (byKind[d.kind] ?? 0) + 1;
+      return {
+        root: state.root,
+        ...ctx.fixedRoot ? { rootSource: "fixed_repo" } : { rootSource: "cwd" },
+        alignment: facts.alignment,
+        entries: facts.entries,
+        managedFiles: facts.files,
+        tokens: facts.tokens,
+        tokenBudget: WHOLE_INDEX_BUDGET,
+        codeSha,
+        drift: {
+          total: facts.drift.length,
+          byKind,
+          ...verbose ? { items: facts.drift } : { sample: facts.drift.slice(0, 10) }
+        },
+        quotaViolations: {
+          total: facts.quotaViolations.length,
+          ...verbose ? { items: facts.quotaViolations } : {}
+        },
+        header: {
+          root: extractHeaderLines(state.rootText),
+          meta: extractHeaderLines(state.metaText)
+        },
+        nextAction: facts.alignment === "aligned" ? "none" : facts.entries === 0 ? "authoring_required" : facts.drift.length > 0 ? "maintain" : "review_required"
+      };
+    }
+  };
+  TOOLS = [
+    rulesTool,
+    overviewTool,
+    searchTool,
+    maintainTool,
+    updateTool,
+    reportTool
+  ];
+  RULES = RULES_TEXT;
+});
+
+// src/cli.ts
+import { resolve as resolve3 } from "path";
+import { existsSync as existsSync4 } from "fs";
+
+// src/core.ts
+var DATA_DIR = ".codebase_store";
+var INDEX_PATH = `${DATA_DIR}/cos.txt`;
+var META_PATH = `${DATA_DIR}/cos.meta.txt`;
+var CODE_PATH = `${DATA_DIR}/cos.code.txt`;
+var CONFIG_PATH = `${DATA_DIR}/config.json`;
+var BASELINE_PATH = `${DATA_DIR}/baseline.json`;
+var MAX_FILE_BYTES = 4 * 1024 * 1024;
+class CosError extends Error {
+  code;
+  constructor(message, code = "cos_error") {
+    super(message);
+    this.code = code;
+    this.name = "CosError";
+  }
+}
+
+// src/version.ts
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+function readVersion() {
+  const candidates = [];
+  const bunDir = import.meta.dir;
+  if (typeof bunDir === "string" && bunDir)
+    candidates.push(bunDir);
+  try {
+    candidates.push(dirname(fileURLToPath(import.meta.url)));
+  } catch {}
+  for (const start of candidates) {
+    let dir = start;
+    for (let i = 0;i < 6; i++) {
+      try {
+        const pkg = JSON.parse(readFileSync(join(dir, "package.json"), "utf8"));
+        if (typeof pkg.version === "string" && pkg.version)
+          return pkg.version;
+      } catch {}
+      const parent = dirname(dir);
+      if (parent === dir)
+        break;
+      dir = parent;
+    }
+  }
+  return "unknown";
+}
+var VERSION = readVersion();
+
+// src/repo.ts
+import { join as join2, resolve, sep, dirname as dirname3 } from "node:path";
+init_core();
+init_format();
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  statSync,
+  rmSync,
+  readFileSync as readFileSync2,
+  writeFileSync,
+  renameSync,
+  openSync,
+  readSync,
+  closeSync
+} from "node:fs";
+function findRepoRoot(start = process.cwd()) {
+  let cur = resolve(start);
+  for (;; ) {
+    if (existsSync(join2(cur, ".git")))
+      return cur;
+    const parent = resolve(cur, "..");
+    if (parent === cur)
+      return resolve(start);
+    cur = parent;
+  }
+}
+function isInitialized(dir) {
+  return existsSync(join2(dir, DATA_DIR2, "cos.txt"));
+}
+function findInitializedRoot(start = process.cwd()) {
+  let cur = resolve(start);
+  for (;; ) {
+    if (isInitialized(cur))
+      return cur;
+    const parent = resolve(cur, "..");
+    if (parent === cur)
+      return null;
+    cur = parent;
+  }
+}
+var globCache = new Map;
+
+// src/commands.ts
+init_core();
+init_repo();
+import { join as join4 } from "node:path";
+var C = {
+  dim: (s) => `\x1B[2m${s}\x1B[0m`,
+  bold: (s) => `\x1B[1m${s}\x1B[0m`,
+  green: (s) => `\x1B[32m${s}\x1B[0m`,
+  yellow: (s) => `\x1B[33m${s}\x1B[0m`,
+  red: (s) => `\x1B[31m${s}\x1B[0m`,
+  cyan: (s) => `\x1B[36m${s}\x1B[0m`
+};
+function cmdInit(root, flags) {
+  try {
+    const { created } = initRepo(root, flags.force === true);
+    console.log(C.green("✓") + ` 初始化完成：${root}`);
+    console.log(C.dim(`  数据全部存放在 ${DATA_DIR2}/ 下（该目录应随 Git 一起提交）`));
+    for (const f of created)
+      console.log(`  ${C.dim("+")} ${f}`);
+    console.log("");
+    console.log(C.bold("下一步："));
+    console.log("  1. " + C.cyan("cos scan") + "  建立基线（按 git ignore 权威枚举文件）");
+    console.log("  2. 在 Agent 里加 MCP 配置（见下方片段），重启 Agent");
+    console.log("  3. 对 Agent 说：" + C.cyan("「读 cos_rules，然后建立索引」"));
+    console.log("");
+    console.log(C.bold("MCP 配置（Claude Code: .mcp.json）"));
+    console.log(C.dim(JSON.stringify({
+      mcpServers: {
+        cos: { command: "npx", args: ["-y", "@bysking/codebase-store", "mcp"] }
+      }
+    }, null, 2)));
+    console.log("");
+    console.log(C.dim("  没写 --repo：server 会按宿主 cwd 向上找 .codebase_store，多项目共用一份配置。"));
+    console.log(C.dim('  若宿主不保证 cwd 在项目内，再显式加 "--repo", "' + root + '"。'));
+    console.log(C.dim('  已全局安装的话，可把 command 改成 "cos"、args 改成 ["mcp"]。'));
+    return 0;
+  } catch (err) {
+    return fail(err);
+  }
+}
+function cmdScan(root, flags) {
+  try {
+    const r = scanRepo(root, flags.force === true);
+    console.log(C.green("✓") + ` 基线建立：${r.files} 个文件，${r.entries} 条已有 Entry`);
+    console.log(C.dim("  Git ignore 是文件来源的唯一权威，未追踪被忽略的文件不会进来。"));
+    return 0;
+  } catch (err) {
+    return fail(err);
+  }
+}
+function cmdVerify(root, flags) {
+  try {
+    const state = loadState(root);
+    const facts = collectFacts(state);
+    const pending = facts.needAuthoring.length + facts.needRemoval.length;
+    const exitCode = facts.drift.length === 0 && pending === 0 ? 0 : 1;
+    if (flags.json) {
+      console.log(JSON.stringify({
+        alignment: facts.alignment,
+        drift: facts.drift,
+        entries: facts.entries,
+        files: facts.files,
+        hasBaseline: facts.hasBaseline,
+        needAuthoring: facts.needAuthoring.length,
+        needRemoval: facts.needRemoval.length,
+        pending
+      }, null, 2));
+      return exitCode;
+    }
+    console.log(C.bold("verify") + `  ${state.root}`);
+    console.log("");
+    if (facts.drift.length === 0 && pending === 0) {
+      console.log(C.green("  ✓ 无漂移，无待创作项"));
+      return 0;
+    }
+    if (facts.drift.length === 0) {
+      console.log(C.green("  ✓ 无漂移"));
+    }
+    const groups = new Map;
+    for (const d of facts.drift) {
+      if (!groups.has(d.kind))
+        groups.set(d.kind, []);
+      groups.get(d.kind).push(d.path);
+    }
+    const label = {
+      malformed: "Malformed（索引里有解析不了的行，写入会丢数据）",
+      missing: "Missing（Entry 在，文件不在）",
+      orphan: "Orphan（Entry 在，对象已不是 index 角色）",
+      stale: "Stale（源码变了，Entry 未更新）",
+      unbaselined: "Unbaselined（受管但未进基线）"
+    };
+    for (const [kind, paths] of groups) {
+      console.log(C.yellow(`  ${label[kind] ?? kind}`) + C.dim(`  ${paths.length} 项`));
+      for (const p of paths.slice(0, 20))
+        console.log(`    ${p}`);
+      if (paths.length > 20)
+        console.log(C.dim(`    ... 还有 ${paths.length - 20} 项`));
+      console.log("");
+    }
+    if (facts.needAuthoring.length > 0) {
+      console.log(C.yellow("  NeedAuthoring（受管但还没有 Entry，待创作）") + C.dim(`  ${facts.needAuthoring.length} 项`));
+      for (const p of facts.needAuthoring.slice(0, 20))
+        console.log(`    ${p}`);
+      if (facts.needAuthoring.length > 20)
+        console.log(C.dim(`    ... 还有 ${facts.needAuthoring.length - 20} 项`));
+      console.log(C.dim("    用 cos_maintain 拿下一批写的目标。"));
+      console.log("");
+    }
+    if (facts.needRemoval.length > 0) {
+      console.log(C.yellow("  NeedRemoval（Entry 已失效，待删除）") + C.dim(`  ${facts.needRemoval.length} 项`));
+      for (const p of facts.needRemoval.slice(0, 20))
+        console.log(`    ${p}`);
+      if (facts.needRemoval.length > 20)
+        console.log(C.dim(`    ... 还有 ${facts.needRemoval.length - 20} 项`));
+      console.log("");
+    }
+    return exitCode;
+  } catch (err) {
+    return fail(err);
+  }
+}
+function cmdCheck(root, flags) {
+  try {
+    const state = loadState(root);
+    const facts = collectFacts(state);
+    const problems = [];
+    const warnings = [];
+    if (facts.entries === 0)
+      problems.push("索引为空：还没有任何 Entry。让 Agent 跑 cos_maintain 建索引。");
+    if (facts.tokens > WHOLE_INDEX_BUDGET.max) {
+      problems.push(`索引 ${facts.tokens} token 超过硬上限 ${WHOLE_INDEX_BUDGET.max}。需要裁剪或拆分。`);
+    } else if (facts.tokens > WHOLE_INDEX_BUDGET.warning) {
+      warnings.push(`索引 ${facts.tokens} token 已过警戒线 ${WHOLE_INDEX_BUDGET.warning}（目标 ${WHOLE_INDEX_BUDGET.target}）。` + `现在还不算失败，但该开始裁剪了。`);
+    }
+    for (const v of facts.quotaViolations) {
+      problems.push(`配额超限 ${v.path} 的 ${v.field}：${v.actual} > ${v.limit}`);
+    }
+    if (facts.alignment !== "aligned") {
+      problems.push(`对齐状态是 ${facts.alignment}，期望 aligned（${facts.drift.length} 项漂移，${facts.needAuthoring.length} 项待创作）`);
+    }
+    if (flags.json) {
+      console.log(JSON.stringify({
+        ok: problems.length === 0,
         alignment: facts.alignment,
         entries: facts.entries,
         files: facts.files,
         tokens: facts.tokens,
-        driftCount: facts.drift.length,
-        quotaViolations: facts.quotaViolations.length,
-        note: "这是紧凑检查点。需要接手开发时请不带 checkOnly 调 cos_overview 读完整索引。"
-      };
+        hasBaseline: facts.hasBaseline,
+        needAuthoring: facts.needAuthoring.length,
+        needRemoval: facts.needRemoval.length,
+        problems,
+        warnings
+      }, null, 2));
+      return problems.length === 0 ? 0 : 1;
     }
-    const chunkTokens = clampChunk(args.chunkTokens ?? cfg.chunkTokens);
-    const text = buildOverviewText(state);
-    const { chunks, tokens } = chunkOverview(text, chunkTokens);
-    const textSha = sha256(text).slice(0, 12);
-    const startIdx = args.cursor ? parseCursor(args.cursor, textSha) : 0;
-    const idx = Math.min(startIdx, chunks.length - 1);
-    const nextCursor = idx + 1 < chunks.length ? `${idx + 1}:${textSha}` : null;
-    const result = {
-      cursor: `${idx}:${textSha}`,
-      nextCursor,
-      chunkIndex: idx,
-      chunkTotal: chunks.length,
-      content: chunks[idx],
-      tokens: estimateTokens(chunks[idx]),
-      wholeIndexTokens: tokens,
-      budget: WHOLE_INDEX_BUDGET,
-      alignment: facts.alignment,
-      entries: facts.entries
-    };
-    if (nextCursor) {
-      result.hint = `还有 ${chunks.length - idx - 1} 块。用 cursor="${nextCursor}" 继续读，读到最后一块才算读完。`;
-    } else {
-      result.complete = true;
-      result.hint = "这是最后一块。你现在持有完整索引。";
+    console.log(C.bold("check") + `  ${state.root}`);
+    console.log("");
+    for (const w of warnings)
+      console.log(C.yellow("  ! ") + w);
+    if (problems.length === 0) {
+      console.log(C.green("  ✓ 通过"));
+      console.log(C.dim(`    ${facts.entries} 条 Entry / ${facts.files} 个受管文件 / ${facts.tokens} token`));
+      return 0;
     }
-    return result;
+    for (const p of problems)
+      console.log(C.red("  ✗ ") + p);
+    return 1;
+  } catch (err) {
+    return fail(err);
   }
-};
-function clampChunk(n) {
-  if (!Number.isFinite(n))
-    return 7000;
-  return Math.max(CHUNK_TOKENS_MIN, Math.min(CHUNK_TOKENS_MAX, Math.floor(n)));
 }
-function parseCursor(cursor, expectSha) {
-  const [idxStr, sha] = cursor.split(":");
-  if (sha && sha !== expectSha) {
-    throw new CosError2(`cursor 失效：索引在交付期间被修改（cursor sha=${sha}，当前 sha=${expectSha}）。` + `请不带 cursor 重新调 cos_overview。`, "cursor_stale");
-  }
-  const n = Number(idxStr);
-  if (!Number.isInteger(n) || n < 0)
-    throw new CosError2(`非法 cursor "${cursor}"`, "bad_cursor");
-  return n;
-}
-var searchTool = {
-  name: "cos_search",
-  description: "在索引里检索。传 path 精确取单个对象的 Entry；传 query 在 F/R/A/S 与路径上做全文匹配。" + "这不是代码搜索 —— 它只查认知索引，不读源码。",
-  inputSchema: {
-    path: z.string().optional().describe("仓库相对路径，精确取一条 Entry"),
-    query: z.string().optional().describe("全文关键词，匹配路径与 F/R/A/S"),
-    tag: z.string().optional().describe("按标签前缀过滤，如 C 或 CG9"),
-    limit: z.number().int().min(1).max(200).optional().describe("最多返回条数，默认 20")
-  },
-  handler: (args, ctx) => {
-    const state = loadState(ctx.root);
-    const limit = typeof args.limit === "number" ? Math.max(1, Math.min(200, args.limit)) : 20;
-    if (typeof args.path === "string") {
-      const hit = state.entries.find((e) => e.path === args.path);
-      if (!hit) {
-        return { found: false, path: args.path, hint: "该对象还没有 Entry。用 cos_maintain 看它是否在待补列表里。" };
-      }
-      return { found: true, entry: hit, formatted: formatEntry(hit) };
-    }
-    let pool = state.entries;
-    if (typeof args.tag === "string" && args.tag) {
-      const t = args.tag.trim();
-      pool = pool.filter((e) => e.tag.startsWith(t));
-    }
-    if (typeof args.query === "string" && args.query.trim()) {
-      const q = args.query.trim().toLowerCase();
-      pool = pool.filter((e) => e.path.toLowerCase().includes(q) || e.f.toLowerCase().includes(q) || e.r.toLowerCase().includes(q) || e.a.toLowerCase().includes(q) || e.s.toLowerCase().includes(q));
-    }
-    return {
-      total: pool.length,
-      returned: Math.min(pool.length, limit),
-      entries: pool.slice(0, limit).map((e) => ({ ...e, formatted: formatEntry(e) })),
-      ...pool.length > limit ? { hint: `还有 ${pool.length - limit} 条，用 limit 或加 query 收窄` } : {}
-    };
-  }
-};
-function formatEntry(e) {
-  return `${e.path}[${e.tag}]: F:${e.f} | R:${e.r} | A:${e.a} | S:${e.s}`;
-}
-var KEY_WORDS = [
-  { re: /(^|\/)(package\.json|tsconfig|go\.mod|Cargo\.toml|pyproject)/i, a: "F", b: "C" },
-  { re: /(^|\/)(Dockerfile|Makefile|\.github\/)/i, a: "O", b: "V" },
-  { re: /(^|\/)(test|spec|__tests__)/i, a: "T", b: "Q" },
-  { re: /\.(test|spec)\.[a-z]+$/i, a: "T", b: "Q" },
-  { re: /(^|\/)(auth|login|session|token|permission)/i, a: "I", b: "I" },
-  { re: /(^|\/)(api|route|handler|controller)/i, a: "E", b: "N" },
-  { re: /(^|\/)(db|model|schema|migration|repository)/i, a: "P", b: "D" },
-  { re: /(^|\/)(config|settings|env)/i, a: "F", b: "C" },
-  { re: /(^|\/)(util|common|shared|helper)/i, a: "C", b: "G" }
-];
-function suggestTag(path) {
-  for (const k of KEY_WORDS)
-    if (k.re.test(path))
-      return `${k.a}${k.b}5M`;
-  return "CG5M";
-}
-var maintainTool = {
-  name: "cos_maintain",
-  description: "无参数调用：服务器算出当前该做什么，返回 nextAction。这是权威状态机的唯一入口 —— " + "不要在脚本里复制它。按 nextAction 行动后再调一次拿下一批。",
-  inputSchema: {
-    limit: z.number().int().min(1).max(50).optional().describe("本批最多返回多少个待补对象，默认 10")
-  },
-  handler: (args, ctx) => {
-    const state = loadState(ctx.root);
+function cmdStatus(root) {
+  try {
+    const state = loadState(root);
     const facts = collectFacts(state);
-    const limit = typeof args.limit === "number" ? Math.max(1, Math.min(50, args.limit)) : 10;
-    const entryByPath = new Map(state.entries.map((e) => [e.path, e]));
-    const stale = facts.drift.filter((d) => d.kind === "stale").map((d) => d.path);
-    if (facts.needRemoval.length > 0) {
-      const batch = facts.needRemoval.slice(0, limit);
-      return {
-        nextAction: "authoring_required",
-        phase: "removal",
-        message: `有 ${facts.needRemoval.length} 个 Entry 已失效（文件不存在，或对象已不是 index 角色）。` + `本批 ${batch.length} 个，确认后用 removals 删除。`,
-        targets: batch.map((p) => ({ path: p, action: "remove", currentEntry: entryByPath.get(p) ?? null })),
-        remaining: Math.max(0, facts.needRemoval.length - limit),
-        hint: "删之前确认：是对象真的不该被索引，而不是你找错文件了。"
-      };
+    const pct = Math.round(facts.entries / Math.max(1, facts.files) * 100);
+    console.log(C.bold("cos status"));
+    console.log(`  仓库      ${state.root}`);
+    console.log(`  对齐      ${colorAlign(facts.alignment)}`);
+    console.log(`  基线      ${facts.hasBaseline ? C.green("已建立") : C.yellow("未建立（先跑 cos scan）")}`);
+    console.log(`  Entry     ${facts.entries}`);
+    console.log(`  受管文件  ${facts.files}`);
+    console.log(`  覆盖率    ${pct}%`);
+    console.log(`  待创作    ${facts.needAuthoring.length}`);
+    console.log(`  待删除    ${facts.needRemoval.length}`);
+    console.log(`  token     ${facts.tokens} / 目标 ${WHOLE_INDEX_BUDGET.target} / 警戒 ${WHOLE_INDEX_BUDGET.warning} / 上限 ${WHOLE_INDEX_BUDGET.max}`);
+    console.log(`  漂移      ${facts.drift.length}`);
+    if (facts.drift.length > 0) {
+      const byKind = {};
+      for (const d of facts.drift)
+        byKind[d.kind] = (byKind[d.kind] ?? 0) + 1;
+      for (const [k, v] of Object.entries(byKind))
+        console.log(`            ${k}: ${v}`);
     }
-    if (facts.needAuthoring.length > 0) {
-      const batch = facts.needAuthoring.slice(0, limit);
-      const isFirst = facts.entries === 0;
-      return {
-        nextAction: "authoring_required",
-        phase: isFirst ? "first_index" : "incremental",
-        message: isFirst ? `首次建索引。本批 ${batch.length} 个对象（共 ${facts.needAuthoring.length} 个待创作）。` + `逐个读源码后写 Entry，用 cos_update 提交。` : `有 ${facts.needAuthoring.length} 个受管文件还没有 Entry。本批 ${batch.length} 个。`,
-        targets: batch.map((p) => ({
-          path: p,
-          suggestedTag: suggestTag(p),
-          hash: fileSha(join4(ctx.root, p))?.slice(0, 12)
-        })),
-        remaining: Math.max(0, facts.needAuthoring.length - limit),
-        contractReminder: "F 是一个核心职责命题，不是清单；S 必须过两问（能推断的不写，删了不出事的不写）。" + "只写你读过源码的对象；suggestedTag 只是依据路径的起点，必须修正。"
-      };
-    }
-    if (stale.length > 0) {
-      const batch = stale.slice(0, limit);
-      return {
-        nextAction: "review_required",
-        phase: "stale_review",
-        message: `有 ${stale.length} 个对象源码变了，Entry 可能已过期。逐个复查后决定是否更新 F/R/A/S。`,
-        targets: batch.map((p) => ({ path: p, currentEntry: entryByPath.get(p) ?? null })),
-        remaining: Math.max(0, stale.length - limit),
-        hint: "很多改动不影响语义（格式、改名、注释）。确认无变化就用 cos_update 重提交同内容刷新基线。"
-      };
-    }
-    if (facts.quotaViolations.length > 0) {
-      return {
-        nextAction: "review_required",
-        phase: "quota",
-        message: `有 ${facts.quotaViolations.length} 处配额超限。`,
-        targets: facts.quotaViolations.slice(0, limit),
-        hint: "收紧内容，不要拆词凑数。S 两问：能推断的不写，删了不出事的不写。"
-      };
-    }
-    return {
-      nextAction: "none",
-      phase: "aligned",
-      message: "索引与代码一致。没有待处理项。",
-      facts: {
-        entries: facts.entries,
-        files: facts.files,
-        tokens: facts.tokens,
-        alignment: facts.alignment
-      }
-    };
+    console.log(`  配额违规  ${facts.quotaViolations.length}`);
+    console.log("");
+    console.log(C.dim("  完整索引：cat " + join4(root, INDEX_PATH2) + " " + join4(root, META_PATH2) + " " + join4(root, CODE_PATH2)));
+    return 0;
+  } catch (err) {
+    return fail(err);
   }
-};
-var updateTool = {
-  name: "cos_update",
-  description: "写入或删除索引条目。upserts 里每条是完整 Entry（不是 patch）；" + "removals 是路径数组。会做配额校验、R 引用校验和回读校验，任一失败整批拒绝。" + "传 expectSha 做 CAS（值来自上一次 cos_overview 或 cos_report 的 codeSha）。",
-  inputSchema: {
-    upserts: z.array(z.object({
-      path: z.string().describe("仓库相对路径"),
-      tag: z.string().describe("紧凑标签 A+B+C+[D]+E，如 CG9L"),
-      f: z.string().describe("Function：一个核心职责命题，不是清单"),
-      r: z.string().describe("Relations：code:<path> 逗号分隔，无关系写 -"),
-      a: z.string().describe("API：稳定的对外契约，无则写 -"),
-      s: z.string().describe("Non-obvious：过两问才写，无则写 -")
-    })).optional().describe("要写入的完整 Entry 列表（整条覆盖，不是 patch）"),
-    removals: z.array(z.string()).optional().describe("要删除的对象路径"),
-    expectSha: z.string().optional().describe(".codebase_store/cos.code.txt 的期望 sha256，用于 CAS（值来自 cos_report 的 codeSha）")
-  },
-  handler: (args, ctx) => {
-    const state = loadState(ctx.root);
-    const upserts = args.upserts ?? [];
-    const removals = args.removals ?? [];
-    const expectSha = args.expectSha ?? null;
-    if (upserts.length === 0 && removals.length === 0) {
-      throw new CosError2("upserts 和 removals 都是空的，没有可做的", "no_op");
-    }
-    for (const e of upserts) {
-      const role = resolveRole(e.path, state.cfg);
-      if (role !== "index") {
-        throw new CosError2(`"${e.path}" 在 scope 里是 ${role} 角色，不能写正式 Entry。` + `改 .codebase_store/config.json 的 scopeRules 才能纳入索引。`, "not_indexable");
-      }
-      if (!existsSync3(join4(ctx.root, e.path))) {
-        throw new CosError2(`"${e.path}" 不存在。Entry 必须绑定真实文件。`, "no_such_file");
-      }
-      try {
-        parseTag(e.tag);
-      } catch (err) {
-        throw err;
-      }
-    }
-    const result = commitEntries(state, upserts, removals, expectSha);
-    const after = loadState(ctx.root);
-    const facts = collectFacts(after);
-    return {
-      ok: true,
-      entries: result.entries,
-      codeSha: result.sha,
-      alignment: facts.alignment,
-      remainingDrift: facts.drift.length,
-      nextStep: facts.drift.length === 0 ? "索引已对齐。可以继续开发任务。" : "还有待处理项，再调 cos_maintain 拿下一批。"
-    };
-  }
-};
-var reportTool = {
-  name: "cos_report",
-  description: "治理报告：对齐状态、漂移清单、配额违规、覆盖统计、Root/Meta 头部信息、codeSha。" + "人看的摘要，也可以用来取 expectSha。",
-  inputSchema: {
-    verbose: z.boolean().optional().describe("包含完整漂移清单，默认只给计数")
-  },
-  handler: (args, ctx) => {
-    const state = loadState(ctx.root);
-    const facts = collectFacts(state);
-    const codeSha = state.codeText ? sha256(state.codeText) : null;
-    const verbose = args.verbose === true;
-    const byKind = {};
-    for (const d of facts.drift)
-      byKind[d.kind] = (byKind[d.kind] ?? 0) + 1;
-    return {
-      root: state.root,
-      ...ctx.fixedRoot ? { rootSource: "fixed_repo" } : { rootSource: "cwd" },
-      alignment: facts.alignment,
-      entries: facts.entries,
-      managedFiles: facts.files,
-      tokens: facts.tokens,
-      tokenBudget: WHOLE_INDEX_BUDGET,
-      codeSha,
-      drift: {
-        total: facts.drift.length,
-        byKind,
-        ...verbose ? { items: facts.drift } : { sample: facts.drift.slice(0, 10) }
-      },
-      quotaViolations: {
-        total: facts.quotaViolations.length,
-        ...verbose ? { items: facts.quotaViolations } : {}
-      },
-      header: {
-        root: extractHeaderLines(state.rootText),
-        meta: extractHeaderLines(state.metaText)
-      },
-      nextAction: facts.alignment === "aligned" ? "none" : facts.entries === 0 ? "authoring_required" : facts.drift.length > 0 ? "maintain" : "review_required"
-    };
-  }
-};
-function extractHeaderLines(text) {
-  return text.split(/\r?\n/).filter((l) => l.startsWith("#")).slice(0, 12);
 }
-var TOOLS = [
-  rulesTool,
-  overviewTool,
-  searchTool,
-  maintainTool,
-  updateTool,
-  reportTool
-];
+function colorAlign(a) {
+  if (a === "aligned")
+    return C.green(a);
+  if (a === "budget_exceeded")
+    return C.red(a);
+  return C.yellow(a);
+}
+function fail(err) {
+  const e = err;
+  console.error(C.red("✗ ") + (e.message ?? String(err)));
+  if (e.code && e.code !== "cos_error")
+    console.error(C.dim(`  code: ${e.code}`));
+  return 2;
+}
 
 // src/cli.ts
-var VERSION = "0.1.0";
-var HELP = `cos ${VERSION} \u2014 \u4ED3\u5E93\u8BA4\u77E5\u7D22\u5F15 MCP
+var VERSION3 = VERSION;
+var HELP = `cos ${VERSION3} \u2014 \u4ED3\u5E93\u8BA4\u77E5\u7D22\u5F15 MCP
 
 \u7528\u6CD5: cos <\u547D\u4EE4> [\u9009\u9879]
 
@@ -1585,7 +1900,7 @@ async function main() {
     return 2;
   }
   if (args.version) {
-    console.log(`cos ${VERSION}`);
+    console.log(`cos ${VERSION3}`);
     return 0;
   }
   if (args.help || args.command === "" || args.command === "help") {
@@ -1593,15 +1908,19 @@ async function main() {
     return 0;
   }
   if (args.command === "mcp") {
+    const [{ runMcpServer: runMcpServer2 }, { TOOLS: TOOLS2 }] = await Promise.all([
+      Promise.resolve().then(() => (init_mcp(), exports_mcp)),
+      Promise.resolve().then(() => (init_tools(), exports_tools))
+    ]);
     if (args.repo) {
       const fixed = resolve3(args.repo);
       if (!existsSync4(fixed)) {
         console.error(`\u4ED3\u5E93\u8DEF\u5F84\u4E0D\u5B58\u5728\uFF1A${fixed}`);
         return 2;
       }
-      await runMcpServer(() => fixed, TOOLS, fixed);
+      await runMcpServer2(() => fixed, TOOLS2, fixed);
     } else {
-      await runMcpServer(() => resolveRepoForRead(process.cwd()), TOOLS, null);
+      await runMcpServer2(() => resolveRepoForRead(process.cwd()), TOOLS2, null);
     }
     await new Promise((resolveHold) => {
       const stop = () => resolveHold();
@@ -1635,7 +1954,9 @@ async function main() {
       return 2;
   }
 }
-main().then((code) => process.exit(code)).catch((err) => {
+main().then((code) => {
+  process.exitCode = code;
+}).catch((err) => {
   console.error(err instanceof CosError ? err.message : err);
-  process.exit(2);
+  process.exitCode = 2;
 });

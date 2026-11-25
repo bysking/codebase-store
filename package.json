@@ -1,6 +1,6 @@
 {
   "name": "@bysking/codebase-store",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "仓库认知索引 MCP — AOCI-CODE 的精简复刻：让 Agent 开工前读一次索引就认识整个系统",
   "type": "module",
   "bin": {
@@ -19,24 +19,17 @@
   },
   "keywords": [
     "agent",
-    "ai",
     "aoci",
     "bun",
-    "claude",
-    "claude-code",
     "codebase",
     "codebase-index",
-    "codex",
-    "cognition",
-    "context",
-    "cursor",
-    "index",
     "knowledge-base",
-    "llm",
     "mcp",
     "mcp-server",
     "model-context-protocol",
-    "repo-map"
+    "repo-map",
+    "@bysking/codebase-store",
+    "bysking"
   ],
   "license": "MIT",
   "repository": {
@@ -49,7 +42,9 @@
     "build:npm": "bun run scripts/build-npm.ts",
     "build:bin": "bun build --compile --minify src/cli.ts --outfile cos",
     "test": "bun test",
-    "prepack": "bun run build:npm"
+    "prepack": "bun run build:npm",
+    "typecheck": "tsc --noEmit",
+    "verify:all": "bun run typecheck && bun test"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",

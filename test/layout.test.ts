@@ -89,7 +89,7 @@ describe("scan 不把数据目录写进基线", () => {
     initRepo(root, false);
     scanRepo(root, false);
     const b = readBaseline(root);
-    const leaked = Object.keys(b.files).filter((k) => k.startsWith(DATA_DIR));
+    const leaked = Object.keys(b.stamps).filter((k) => k.startsWith(DATA_DIR));
     expect(leaked).toEqual([]);
   });
 });

@@ -1,4 +1,4 @@
-# cos — 仓库认知索引 MCP
+# codebase-store — 仓库认知索引 MCP
 
 > AOCI-CODE 的精简复刻。**1820 个 Go 文件 → 约 1900 行 TypeScript。**
 
@@ -396,11 +396,13 @@ git clone https://github.com/bysking/codebase-store.git
 cd codebase-store
 bun install
 
-bun test                    # 56 个单测
+bun test                    # 119 个单测
 bunx tsc --noEmit           # 类型检查
+bun run typecheck           # 同上，脚本化
+bun run verify:all          # typecheck + test
 bun run src/cli.ts --help   # 不安装直接跑
 bun run build:bin           # 单二进制 → ./cos（内嵌 Bun runtime，约 64MB）
-bun run build:npm           # npx 入口 → bin/cos.mjs（约 59KB）
+bun run build:npm           # npx 入口 → bin/cos.mjs（约 71KB）
 ```
 
 ### 双入口是怎么工作的
@@ -415,8 +417,10 @@ bun run build:npm           # npx 入口 → bin/cos.mjs（约 59KB）
 源码只用 `node:*` 标准 API（`node:crypto` / `node:child_process` / `node:fs`），
 **不依赖任何 Bun 专有能力**——这是两条路径能共存的前提。
 
-`prepublishOnly` 钩子会自动跑 `build:npm`，所以发布前 `bin/cos.mjs` 一定是新的，
-不会出现「源码改了但 npx 版还是旧的」。
+`prepack` 钩子会自动跑 `build:npm`，所以 `npm pack` 与 `npm publish` 之前
+`bin/cos.mjs` 一定是新的，不会出现「源码改了但 npx 版还是旧的」。
+`test/dist-freshness.test.ts` 会在 CI/本地测试时比对源码与产物的字节一致性，
+忘记重建会直接让测试失败。
 
 本地调试 MCP 协议（发两帧看返回）：
 
@@ -440,10 +444,15 @@ npm publish
 ## 已知边界
 
 - 只支持 Git 仓库的文件枚举权威；无 git 时回退到目录遍历
-- 无并发写保护（CAS 兜底）；多人协作场景需要再加锁
+- 并发写入靠 CAS 兜底（每次写入都校验磁盘快照），**不是**分布式锁；
+  多进程同时写同一个仓库仍可能反复冲突，那种场景需要外部互斥
 - 没有 attestation 链：Agent 可能少读几个 chunk，代价是任务质量而非治理污染
 - token 估算是粗略启发式（CJK 1 字 = 1 token，ASCII 4 字符 = 1 token）
-- 运行需要 Bun ≥ 1.1（用了 `Bun.spawnSync`、`Bun.CryptoHasher`、`Bun.stdin`）
+- stale 判定用 `size + mtimeMs` 做快路径，mtime 被手工改回旧值时可能漏报一次；
+  `cos scan --force` 可重建基线
+- **运行时不依赖 Bun**：`src/` 只用 `node:*` 标准 API，同一份源码既能 `bunx`
+  直跑 TS，也能被编译成 `bin/cos.mjs` 在 Node ≥ 18 上运行。
+  只有跑测试与打包需要 Bun（用了 `bun:test` 与 `bun build`）
 
 ## License
 

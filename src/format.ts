@@ -92,33 +92,60 @@ export function renderSectionHeader(dir: string): string {
 // Volume 文档
 // ────────────────────────────────────────────────────────────
 
+export interface MalformedLine {
+  /** 1-based 行号，方便人直接定位 */
+  line: number;
+  text: string;
+}
+
 export interface VolumeDoc {
   entries: Entry[];
   /** 按目录分组的原始顺序（保证写回时结构稳定） */
   order: string[];
+  /**
+   * 形似 Entry 但解析失败的行。
+   *
+   * 为什么必须收集而不是丢弃：Code Volume 只允许「注释 / 目录段头 / Entry」三类行，
+   * 任何第四条分支都是**格式损坏**。旧实现直接 return null —— 坏条 Entry 既不算
+   * 存在也不报错，下一次 cos_update 重写文件时就永久消失（实测：手改成小写标签的
+   * Entry 会静默蒸发）。这里把坏行留成事实，由调用方失败关闭。
+   */
+  malformed: MalformedLine[];
 }
 
 export function parseCodeVolume(text: string): VolumeDoc {
   const lines = text.split(/\r?\n/);
   const entries: Entry[] = [];
   const order: string[] = [];
+  const malformed: MalformedLine[] = [];
   let dir = "";
   let sawMarker = false;
-  for (const line of lines) {
-    if (line.startsWith("#") && !sawMarker && line.includes("COS-CODE-VOLUME")) { sawMarker = true; continue; }
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!;
+    if (line.trim() === "") continue;
+    // 顺序很关键：Entry 优先试，能解析成 Entry 的行永远算 Entry
+    // （历史行为允许 `#foo.ts[CG7M]: ...` 这类路径以 # 开头的 Entry，
+    //  所以不能靠"是不是 # 开头"来判断注释）。
+    const e = parseEntryLine(line, dir);
+    if (e) {
+      entries.push(e);
+      if (!order.includes(dir)) order.push(dir);
+      continue;
+    }
     const sec = parseSectionHeader(line);
     if (sec !== null) {
       dir = sec;
       if (!order.includes(dir)) order.push(dir);
       continue;
     }
-    const e = parseEntryLine(line, dir);
-    if (e) {
-      entries.push(e);
-      if (!order.includes(dir)) order.push(dir);
+    if (line.startsWith("#")) {
+      if (!sawMarker && line.includes("COS-CODE-VOLUME")) sawMarker = true;
+      continue;
     }
+    // 走到这里：非空、非注释、非段头、非合法 Entry —— 格式损坏，记账。
+    malformed.push({ line: i + 1, text: line });
   }
-  return { entries, order };
+  return { entries, order, malformed };
 }
 
 export function renderCodeVolume(entries: Entry[], dirOrder?: string[]): string {
@@ -211,18 +238,6 @@ export function renderRoot(project: string, invariants: string): string {
     `#Volume: id=code kind=code path=${CODE_BASENAME} format=object-fras-v2 depends=meta state=enabled`,
     "",
   ].join("\n");
-}
-
-export function parseRootMeta(text: string): { project: string; invariants: string } {
-  let project = "";
-  let invariants = "";
-  for (const line of text.split(/\r?\n/)) {
-    const p = /^#Project:\s*(.*)$/.exec(line);
-    if (p) project = p[1]!.trim();
-    const g = /^#Global-Invariants:\s*(.*)$/.exec(line);
-    if (g) invariants = g[1]!.trim();
-  }
-  return { project, invariants };
 }
 
 export function renderMeta(): string {
