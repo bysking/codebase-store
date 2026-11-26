@@ -1,6 +1,6 @@
 {
   "name": "@bysking/codebase-store",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "仓库认知索引 MCP — AOCI-CODE 的精简复刻：让 Agent 开工前读一次索引就认识整个系统",
   "type": "module",
   "bin": {

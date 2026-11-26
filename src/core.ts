@@ -47,11 +47,19 @@ export const BASELINE_PATH = `${DATA_DIR}/baseline.json`;
 export const META_BASENAME = "cos.meta.txt";
 export const CODE_BASENAME = "cos.code.txt";
 
-/** 单条 Entry 字段长度上限（字符）。按 C 重要度分档：c9-8 / c7-4 / c3-1 */
+/**
+ * 单条 Entry 字段长度上限（字符）。按 C 重要度分档：c9-8 / c7-4 / c3-1。
+ *
+ * 为什么是这个量级：S 字段常常要装一条"删了会出事的"约束细节（如"必须保留原始文件"、
+ * "MySQL 5.7 不支持 MariaDB"），600 字符时作者被迫压缩成语义模糊的半句，反而丢失
+ * 了本该防止错误的信息。实测 70 万行规模仓库的索引仍在 240k token 硬上限内（
+ * WHOLE_INDEX_BUDGET），所以放宽单条上限不会把整体预算撑爆 —— 单条写得再长，
+ * 条数才是预算的主导项。
+ */
 export const FIELD_QUOTA: Record<"high" | "mid" | "low", { f: number; r: number; a: number; s: number }> = {
-  high: { f: 300, r: 240, a: 200, s: 600 },
-  mid: { f: 200, r: 160, a: 140, s: 200 },
-  low: { f: 120, r: 100, a: 90, s: 50 },
+  high: { f: 450, r: 400, a: 320, s: 1200 },
+  mid: { f: 300, r: 250, a: 210, s: 400 },
+  low: { f: 180, r: 150, a: 120, s: 120 },
 };
 
 /** Whole-Index 预算（token） */

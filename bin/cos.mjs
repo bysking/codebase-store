@@ -69,9 +69,9 @@ var init_core = __esm(() => {
   CONFIG_PATH2 = `${DATA_DIR2}/config.json`;
   BASELINE_PATH2 = `${DATA_DIR2}/baseline.json`;
   FIELD_QUOTA = {
-    high: { f: 300, r: 240, a: 200, s: 600 },
-    mid: { f: 200, r: 160, a: 140, s: 200 },
-    low: { f: 120, r: 100, a: 90, s: 50 }
+    high: { f: 450, r: 400, a: 320, s: 1200 },
+    mid: { f: 300, r: 250, a: 210, s: 400 },
+    low: { f: 180, r: 150, a: 120, s: 120 }
   };
   WHOLE_INDEX_BUDGET = { target: 120000, warning: 180000, max: 240000 };
   DEFAULT_EXCLUDE_DIRS = [
@@ -272,6 +272,10 @@ function renderRoot(project, invariants) {
   ].join(`
 `);
 }
+function renderQuotaLine() {
+  const bands = [["C9-8", "high"], ["C7-4", "mid"], ["C3-1", "low"]];
+  return `#S quota: ${bands.map(([label, band]) => `${label}≤${FIELD_QUOTA[band].s}`).join(" ")}`;
+}
 function renderMeta() {
   return [
     META_MARKER,
@@ -279,7 +283,7 @@ function renderMeta() {
     `#FRAS-Discipline: 1`,
     `#FRAS-Limits-Authority: machine-contract`,
     `#S-Admission: non-inferable-and-error-preventing`,
-    `#S quota: C9-8≤600 C7-4≤200 C3-1≤50`,
+    renderQuotaLine(),
     `#Object-Kinds: code=file`,
     `#Canonical-Tag-Authoring: compact A+B+C+[D]+E`,
     `#Code canonical identity example: code:path/to/file.go`,
@@ -1032,6 +1036,18 @@ __export(exports_tools, {
 import { join as join6 } from "node:path";
 import { existsSync as existsSync3 } from "node:fs";
 import { z } from "zod";
+function renderQuotaTable() {
+  const bands = [["9-8", "high"], ["7-4", "mid"], ["3-1", "low"]];
+  return [
+    "| C 重要度 | F | R | A | S |",
+    "|---|---|---|---|---|",
+    ...bands.map(([label, band]) => {
+      const q = FIELD_QUOTA[band];
+      return `| ${label} | ${q.f} | ${q.r} | ${q.a} | ${q.s} |`;
+    })
+  ].join(`
+`);
+}
 function buildOverviewText(state) {
   return [
     "<!-- cos:overview:start -->",
@@ -1107,7 +1123,12 @@ function suggestTag(path) {
 function extractHeaderLines(text) {
   return text.split(/\r?\n/).filter((l) => l.startsWith("#")).slice(0, 12);
 }
-var RULES_TEXT = `# cos 会话合同
+var RULES_TEXT, rulesTool, overviewTool, searchTool, KEY_WORDS, maintainTool, updateTool, reportTool, TOOLS, RULES;
+var init_tools = __esm(() => {
+  init_core();
+  init_format();
+  init_repo();
+  RULES_TEXT = `# cos 会话合同
 
 ## 你面对的是什么
 
@@ -1163,11 +1184,7 @@ var RULES_TEXT = `# cos 会话合同
 
 ### 配额（程序强制，改索引文本放宽不了）
 
-| C 重要度 | F | R | A | S |
-|---|---|---|---|---|
-| 9-8 | 300 | 240 | 200 | 600 |
-| 7-4 | 200 | 160 | 140 | 200 |
-| 3-1 | 120 | 100 | 90 | 50 |
+${renderQuotaTable()}
 
 超限会被拒。**正确做法是收紧内容，不是拆词凑数。**
 
@@ -1194,11 +1211,7 @@ var RULES_TEXT = `# cos 会话合同
 - 禁止用 grep / 读源码冒充"已读索引"
 - 禁止在上下文压缩后不复读索引就继续声称掌握系统
 - 禁止把索引正文或摘要塞进 handoff（只留"请重载"指令）
-- 禁止绕过 \`cos_update\` 直接编辑 \`.codebase_store/cos.code.txt\`（手改会被 CAS 冲突挡下）`, rulesTool, overviewTool, searchTool, KEY_WORDS, maintainTool, updateTool, reportTool, TOOLS, RULES;
-var init_tools = __esm(() => {
-  init_core();
-  init_format();
-  init_repo();
+- 禁止绕过 \`cos_update\` 直接编辑 \`.codebase_store/cos.code.txt\`（手改会被 CAS 冲突挡下）`;
   rulesTool = {
     name: "cos_rules",
     description: "返回会话合同：怎么用这套索引、F/R/A/S 怎么写、配额是多少、什么是禁止的。" + "新会话开始时先读一次。和 aoci_rules 同名同义。",

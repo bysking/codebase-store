@@ -16,7 +16,7 @@ import { mkdtempSync, rmSync, mkdirSync, writeFileSync, readFileSync, existsSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
-  CODE_PATH, CONFIG_PATH, BASELINE_PATH, WHOLE_INDEX_BUDGET, DATA_DIR,
+  CODE_PATH, CONFIG_PATH, BASELINE_PATH, WHOLE_INDEX_BUDGET, DATA_DIR, FIELD_QUOTA,
 } from "../src/core.ts";
 import {
   initRepo, scanRepo, loadState, collectFacts, commitEntries,
@@ -225,9 +225,9 @@ describe("P1-10 预算常量是唯一来源", () => {
      * 用 high 档配额上限内的一条超长 S（c9）来扩大体积。
      */
     const codeP = join(root, CODE_PATH);
-    const longS = "y".repeat(600);
+    const longS = "y".repeat(FIELD_QUOTA.high.s);
     const entryLines: string[] = ["#COS-CODE-VOLUME: 1", "", "===/<repository>/src/==="];
-    // C9 → S 上限 600；实测每条约 160 token，需 1500+ 条才会超过 max（240k）
+    // C9 → S 取 high 档上限；单条约 300+ token，1600 条足以超过 max（240k）
     for (let i = 0; i < 1600; i++) {
       entryLines.push(`f${i}.ts[C9:L]: F:职责 | R:- | A:- | S:${longS}`);
     }

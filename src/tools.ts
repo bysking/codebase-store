@@ -13,7 +13,7 @@
 import { join } from "node:path";
 import { existsSync } from "node:fs";
 import {
-  CHUNK_TOKENS_MIN, CHUNK_TOKENS_MAX, WHOLE_INDEX_BUDGET,
+  CHUNK_TOKENS_MIN, CHUNK_TOKENS_MAX, WHOLE_INDEX_BUDGET, FIELD_QUOTA,
   CosError, estimateTokens, sha256, splitByBytes,
   type Entry, type OverviewChunk,
 } from "./core.ts";
@@ -30,6 +30,25 @@ import type { ToolDef } from "./mcp.ts";
 // ────────────────────────────────────────────────────────────
 // 会话合同（等价于 aoci_rules）
 // ────────────────────────────────────────────────────────────
+
+/**
+ * 配额表从 FIELD_QUOTA 渲染，不手写数字。
+ *
+ * 理由同 renderMeta 的配额行：会话合同是模型判断"还能写多少字"的唯一依据，
+ * 它一旦和代码里的常量漂移，模型就会照着错的额度压缩内容、或反复被拒却
+ * 不知道为什么。让文本成为常量的投影，就不存在两处真相。
+ */
+function renderQuotaTable(): string {
+  const bands: [string, "high" | "mid" | "low"][] = [["9-8", "high"], ["7-4", "mid"], ["3-1", "low"]];
+  return [
+    "| C 重要度 | F | R | A | S |",
+    "|---|---|---|---|---|",
+    ...bands.map(([label, band]) => {
+      const q = FIELD_QUOTA[band];
+      return `| ${label} | ${q.f} | ${q.r} | ${q.a} | ${q.s} |`;
+    }),
+  ].join("\n");
+}
 
 const RULES_TEXT = `# cos 会话合同
 
@@ -87,11 +106,7 @@ const RULES_TEXT = `# cos 会话合同
 
 ### 配额（程序强制，改索引文本放宽不了）
 
-| C 重要度 | F | R | A | S |
-|---|---|---|---|---|
-| 9-8 | 300 | 240 | 200 | 600 |
-| 7-4 | 200 | 160 | 140 | 200 |
-| 3-1 | 120 | 100 | 90 | 50 |
+${renderQuotaTable()}
 
 超限会被拒。**正确做法是收紧内容，不是拆词凑数。**
 

@@ -240,6 +240,18 @@ export function renderRoot(project: string, invariants: string): string {
   ].join("\n");
 }
 
+/**
+ * Meta 里的配额行必须**由 FIELD_QUOTA 渲染**，不能手写常量。
+ *
+ * 这行是给人和模型看的说明，真正拦截写入的是代码里的常量。手写一份文本
+ * 就等于制造两处真相：一边放宽了上限，另一边还写着旧数字，读者会照着错的
+ * 数字压缩内容（或以为被放宽而反复被拒）。
+ */
+function renderQuotaLine(): string {
+  const bands: [string, "high" | "mid" | "low"][] = [["C9-8", "high"], ["C7-4", "mid"], ["C3-1", "low"]];
+  return `#S quota: ${bands.map(([label, band]) => `${label}≤${FIELD_QUOTA[band].s}`).join(" ")}`;
+}
+
 export function renderMeta(): string {
   return [
     META_MARKER,
@@ -247,7 +259,7 @@ export function renderMeta(): string {
     `#FRAS-Discipline: 1`,
     `#FRAS-Limits-Authority: machine-contract`,
     `#S-Admission: non-inferable-and-error-preventing`,
-    `#S quota: C9-8≤600 C7-4≤200 C3-1≤50`,
+    renderQuotaLine(),
     `#Object-Kinds: code=file`,
     `#Canonical-Tag-Authoring: compact A+B+C+[D]+E`,
     `#Code canonical identity example: code:path/to/file.go`,

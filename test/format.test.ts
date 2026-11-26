@@ -6,9 +6,9 @@ import { describe, expect, test } from "bun:test";
 import {
   parseTag, parseEntryLine, renderEntryLine, parseSectionHeader,
   renderSectionHeader, parseCodeVolume, renderCodeVolume, validateEntry,
-  validateRelations, roundTripCheck,
+  validateRelations, roundTripCheck, renderMeta,
 } from "../src/format.ts";
-import { estimateTokens, splitByBytes } from "../src/core.ts";
+import { estimateTokens, splitByBytes, FIELD_QUOTA } from "../src/core.ts";
 
 describe("parseTag", () => {
   test("解析无 D 维度的紧凑标签", () => {
@@ -85,19 +85,32 @@ describe("Volume 解析/渲染", () => {
 });
 
 describe("配额校验", () => {
-  test("C9 的 S 允许到 600", () => {
-    const e = { path: "x.ts", tag: "CG9T", f: "f", r: "-", a: "a", s: "s".repeat(600) };
+  /*
+   * 用例跟着 FIELD_QUOTA 走，而不是写死数字：配额是会被调整的机器合同，
+   * 写死 600/50 的用例在每次调整时都要改一遍，而且改的时候很容易把
+   * "上限 +1 被拒"这条真正的边界漏掉。
+   */
+  test("C9 的 S 恰好等于上限时通过", () => {
+    const lim = FIELD_QUOTA.high.s;
+    const e = { path: "x.ts", tag: "CG9T", f: "f", r: "-", a: "a", s: "s".repeat(lim) };
     expect(validateEntry(e)).toHaveLength(0);
   });
-  test("C9 的 S 超过 600 被拒", () => {
-    const e = { path: "x.ts", tag: "CG9T", f: "f", r: "-", a: "a", s: "s".repeat(601) };
+  test("C9 的 S 超过上限 1 字符被拒", () => {
+    const e = { path: "x.ts", tag: "CG9T", f: "f", r: "-", a: "a", s: "s".repeat(FIELD_QUOTA.high.s + 1) };
     expect(validateEntry(e)).toHaveLength(1);
   });
-  test("C3 的 S 上限只有 50", () => {
-    const e = { path: "x.ts", tag: "CG3T", f: "f", r: "-", a: "a", s: "s".repeat(51) };
+  test("C3 用 low 档，S 超过上限被拒", () => {
+    const lim = FIELD_QUOTA.low.s;
+    const e = { path: "x.ts", tag: "CG3T", f: "f", r: "-", a: "a", s: "s".repeat(lim + 1) };
     const v = validateEntry(e);
     expect(v[0]!.field).toBe("s");
-    expect(v[0]!.limit).toBe(50);
+    expect(v[0]!.limit).toBe(lim);
+  });
+  test("三档配额随 C 重要度单调放宽", () => {
+    for (const f of ["f", "r", "a", "s"] as const) {
+      expect(FIELD_QUOTA.high[f]).toBeGreaterThan(FIELD_QUOTA.mid[f]);
+      expect(FIELD_QUOTA.mid[f]).toBeGreaterThan(FIELD_QUOTA.low[f]);
+    }
   });
 });
 
@@ -109,6 +122,24 @@ describe("R 引用校验", () => {
   });
   test("裸文件名被拒（不是写别名）", () => {
     expect(validateRelations("someRandomName").length).toBeGreaterThan(0);
+  });
+});
+
+describe("Meta 渲染", () => {
+  /*
+   * Meta 的配额行是给人和模型看的说明，不是权威值。它一旦和 FIELD_QUOTA
+   * 漂移，读者就会照着错的额度压缩内容 —— 要么白白丢信息，要么反复被拒
+   * 却查不出原因。所以这里断言它是常量的投影，而非一份独立文本。
+   */
+  test("#S quota 行与 FIELD_QUOTA 一致", () => {
+    const meta = renderMeta();
+    const line = meta.split("\n").find((l) => l.startsWith("#S quota:"))!;
+    expect(line).toBe(
+      `#S quota: C9-8≤${FIELD_QUOTA.high.s} C7-4≤${FIELD_QUOTA.mid.s} C3-1≤${FIELD_QUOTA.low.s}`,
+    );
+  });
+  test("#FRAS-Limits-Authority 仍声明配额归机器", () => {
+    expect(renderMeta()).toContain("#FRAS-Limits-Authority: machine-contract");
   });
 });
 
